@@ -63,10 +63,10 @@ function mulberry32(seed) {
 const ROUNDS = [
   { round:1,  gravity:0.03, fuel:800, ammo:0,  padWidth:100,padPlacementRisk:0.0, terrainRoughness:0.08, terrainSeed:101, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
   { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.25,terrainRoughness:0.15, terrainSeed:217, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
-  { round:3,  gravity:0.04, fuel:650, ammo:15, padWidth:80, padPlacementRisk:0.3, terrainRoughness:0.22, terrainSeed:318, enemyRate:0.4, enemyTypes:['turret'],          bombSpeed:1.8, blastRadius:25, requiredKills:0, padAlien:false },
-  { round:4,  gravity:0.04, fuel:600, ammo:20, padWidth:74, padPlacementRisk:0.35,terrainRoughness:0.28, terrainSeed:419, enemyRate:0.5, enemyTypes:['turret'],          bombSpeed:2.0, blastRadius:28, requiredKills:0, padAlien:false },
-  { round:5,  gravity:0.05, fuel:560, ammo:25, padWidth:68, padPlacementRisk:0.4, terrainRoughness:0.32, terrainSeed:520, enemyRate:0.6, enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:30, requiredKills:0, padAlien:false },
-  { round:6,  gravity:0.05, fuel:520, ammo:30, padWidth:62, padPlacementRisk:0.45,terrainRoughness:0.36, terrainSeed:621, enemyRate:0.7, enemyTypes:['turret','alien'],  bombSpeed:2.4, blastRadius:32, requiredKills:0, padAlien:true  },
+  { round:3,  gravity:0.04, fuel:650, ammo:20, padWidth:80, padPlacementRisk:0.3, terrainRoughness:0.22, terrainSeed:318, enemyRate:0.7, enemyTypes:['turret'],          bombSpeed:2.0, blastRadius:25, requiredKills:0, padAlien:false },
+  { round:4,  gravity:0.04, fuel:600, ammo:25, padWidth:74, padPlacementRisk:0.35,terrainRoughness:0.28, terrainSeed:419, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:28, requiredKills:0, padAlien:false },
+  { round:5,  gravity:0.05, fuel:560, ammo:30, padWidth:68, padPlacementRisk:0.4, terrainRoughness:0.32, terrainSeed:520, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.4, blastRadius:30, requiredKills:0, padAlien:true  },
+  { round:6,  gravity:0.05, fuel:520, ammo:35, padWidth:62, padPlacementRisk:0.45,terrainRoughness:0.36, terrainSeed:621, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:32, requiredKills:1, padAlien:true  },
   { round:7,  gravity:0.06, fuel:500, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:722, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:35, requiredKills:1, padAlien:true  },
   { round:8,  gravity:0.06, fuel:480, ammo:35, padWidth:50, padPlacementRisk:0.45,terrainRoughness:0.44, terrainSeed:823, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.8, blastRadius:38, requiredKills:1, padAlien:true  },
   { round:9,  gravity:0.07, fuel:460, ammo:40, padWidth:46, padPlacementRisk:0.35,terrainRoughness:0.48, terrainSeed:942, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:3.0, blastRadius:40, requiredKills:2, padAlien:true  },
@@ -81,7 +81,7 @@ const TIPS = [
   'Watch the radar to track incoming bombs',
   'Shoot enemy bombs out of the air with Space',
   'Later rounds require enemy kills before landing',
-  'Arm weapons with Shift, then fire with Space',
+  'Press Space (or FIRE on mobile) to shoot downward',
   'Counter-thrust early to stop horizontal drift',
   'The V-SPD and H-SPD gauges turn red when unsafe',
   'You gain an extra life for each successful landing',
@@ -129,7 +129,7 @@ function resetShip() {
     maxHealth: 100,
     thrustL: false,  // left thruster active
     thrustR: false,  // right thruster active
-    armed: false,
+    armed: true,
   };
 }
 
@@ -281,11 +281,6 @@ function handleKeyAction(code, down) {
   if (state === STATE.WIN && (code === 'Space' || code === 'Enter')) {
     state = STATE.TITLE;
   }
-  // Armed toggle
-  if (state === STATE.PLAYING && (code === 'ShiftLeft' || code === 'ShiftRight')) {
-    ship.armed = !ship.armed;
-    sfxArm();
-  }
   // Fire
   if (state === STATE.PLAYING && code === 'Space') {
     fireBullet();
@@ -294,7 +289,7 @@ function handleKeyAction(code, down) {
 
 // ── Touch Controls ──
 let touchThrust = false, touchLeft = false, touchRight = false;
-let touchFire = false, touchArm = false;
+let touchFire = false;
 let isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
 // Touch button zones (in canvas-normalized coords 0-1, relative to full W×H)
@@ -302,26 +297,13 @@ const TOUCH_BTNS = {
   rotL:   { x:0.02, y:0.56, w:0.17, h:0.14, label:'\u25C0' },
   rotR:   { x:0.21, y:0.56, w:0.17, h:0.14, label:'\u25B6' },
   thrust: { x:0.33, y:0.50, w:0.34, h:0.21, label:'BOOST' },
-  arm:    { x:0.70, y:0.56, w:0.14, h:0.14, label:'ARM' },
-  fire:   { x:0.85, y:0.50, w:0.14, h:0.21, label:'FIRE' },
+  fire:   { x:0.72, y:0.50, w:0.26, h:0.21, label:'FIRE' },
 };
 
 canvas.addEventListener('touchstart', e => { e.preventDefault(); handleTouchEvent(e); }, { passive: false });
 canvas.addEventListener('touchmove', e => { e.preventDefault(); handleTouchEvent(e); }, { passive: false });
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
-  // Check for arm toggle on release (before resetting touch states)
-  if (e.changedTouches.length > 0) {
-    const r = canvas.getBoundingClientRect();
-    for (let i = 0; i < e.changedTouches.length; i++) {
-      const tx = (e.changedTouches[i].clientX - r.left) / r.width;
-      const ty = (e.changedTouches[i].clientY - r.top) / r.height;
-      if (hitBtn(tx, ty, TOUCH_BTNS.arm) && state === STATE.PLAYING) {
-        ship.armed = !ship.armed;
-        sfxArm();
-      }
-    }
-  }
   handleTouchEvent(e);
 }, { passive: false });
 canvas.addEventListener('touchcancel', e => {
@@ -378,7 +360,6 @@ function drawTouchControls() {
     if (key === 'rotR' && touchRight) active = true;
     if (key === 'thrust' && touchThrust) active = true;
     if (key === 'fire' && touchFire) active = true;
-    if (key === 'arm' && ship.armed) active = true;
 
     ctx.fillStyle = active ? 'rgba(100,200,255,0.25)' : 'rgba(100,150,200,0.10)';
     ctx.strokeStyle = active ? 'rgba(100,200,255,0.5)' : 'rgba(100,150,200,0.2)';
@@ -486,7 +467,7 @@ let fireTimer = 0;
 const FIRE_RATE = 0.12; // seconds between shots
 
 function fireBullet() {
-  if (!ship.armed || ship.ammo <= 0) return;
+  if (ship.ammo <= 0) return;
   if (fireTimer > 0) return;
   fireTimer = FIRE_RATE;
   ship.ammo--;
@@ -1174,7 +1155,7 @@ function updatePlaying(dt) {
   }
 
   // Held fire (Space key or touch fire button)
-  if ((keys['Space'] || touchFire) && ship.armed) {
+  if (keys['Space'] || touchFire) {
     fireBullet();
   }
 
@@ -1380,10 +1361,10 @@ function drawShip() {
   ctx.stroke();
 
   // ── Belly gun ──
-  ctx.fillStyle = ship.armed ? '#ff6644' : '#556677';
+  ctx.fillStyle = '#ff6644';
   ctx.fillRect(-2, S * 0.5, 4, S * 0.3);
   // Gun barrel tip
-  ctx.fillStyle = ship.armed ? '#ff4422' : '#445566';
+  ctx.fillStyle = '#ff4422';
   ctx.fillRect(-1.5, S * 0.75, 3, 3);
 
   // ── Panel detail lines ──
@@ -1395,21 +1376,6 @@ function drawShip() {
   ctx.moveTo(-S * 0.5, S * 0.2);
   ctx.lineTo(S * 0.5, S * 0.2);
   ctx.stroke();
-
-  // ── Armed indicator light ──
-  if (ship.armed) {
-    ctx.fillStyle = '#ff4444';
-    ctx.beginPath();
-    ctx.arc(0, S * 0.05, 2, 0, Math.PI * 2);
-    ctx.fill();
-    // Glow
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = '#ff0000';
-    ctx.beginPath();
-    ctx.arc(0, S * 0.05, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
 
   ctx.restore();
 }
@@ -1532,14 +1498,6 @@ function drawHUD() {
   const radarH = 55;
   drawRadar(radarX, radarY, radarW, radarH);
 
-  // Armed indicator text
-  if (ship.armed) {
-    ctx.fillStyle = '#ff4444';
-    ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('ARMED', col2, labelY + 78);
-  }
-
   // Mute indicator
   if (audioMuted) {
     ctx.fillStyle = '#666';
@@ -1653,11 +1611,11 @@ function drawOverlay() {
     if (isMobile) {
       ctx.fillText('Use on-screen buttons to fly', W / 2, H * 0.38);
       ctx.fillText('L/R: Side thrusters  BOOST: Upward', W / 2, H * 0.42);
-      ctx.fillText('ARM: Toggle weapons  FIRE: Shoot down', W / 2, H * 0.46);
+      ctx.fillText('FIRE: Shoot downward', W / 2, H * 0.46);
     } else {
       ctx.fillText('Left/Right: Side thrusters', W / 2, H * 0.38);
       ctx.fillText('Both or Up: Boost upward', W / 2, H * 0.42);
-      ctx.fillText('Shift: Arm Weapons  |  Space: Fire down', W / 2, H * 0.46);
+      ctx.fillText('Space: Fire weapons downward', W / 2, H * 0.46);
     }
     ctx.fillText('Land safely on the green pad!', W / 2, H * 0.50);
     if (!isMobile) ctx.fillText('M: Mute/Unmute', W / 2, H * 0.54);
