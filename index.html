@@ -101,15 +101,14 @@ function resetShip() {
     y: 60,
     vx: 0,
     vy: 0,
-    angle: 0,       // radians, 0 = pointing up
-    angVel: 0,
     fuel: ROUNDS[currentRound].fuel,
     maxFuel: ROUNDS[currentRound].fuel,
     ammo: ROUNDS[currentRound].ammo,
     maxAmmo: ROUNDS[currentRound].ammo,
     health: 100,
     maxHealth: 100,
-    thrusting: false,
+    thrustL: false,  // left thruster active
+    thrustR: false,  // right thruster active
     armed: false,
   };
 }
@@ -274,7 +273,7 @@ let isMobile = false;
 const TOUCH_BTNS = {
   rotL:   { x:0.02, y:0.60, w:0.13, h:0.12, label:'\u25C0' },  // left arrow
   rotR:   { x:0.17, y:0.60, w:0.13, h:0.12, label:'\u25B6' },  // right arrow
-  thrust: { x:0.37, y:0.55, w:0.26, h:0.18, label:'THRUST' },
+  thrust: { x:0.37, y:0.55, w:0.26, h:0.18, label:'BOOST' },
   arm:    { x:0.70, y:0.60, w:0.13, h:0.12, label:'ARM' },
   fire:   { x:0.85, y:0.55, w:0.13, h:0.18, label:'FIRE' },
 };
@@ -465,11 +464,13 @@ function fireBullet() {
     if (!bullets[i].active) {
       const b = bullets[i];
       b.active = true;
-      // Fire from nose of ship
-      b.x = ship.x + Math.sin(ship.angle) * SHIP_SIZE;
-      b.y = ship.y - Math.cos(ship.angle) * SHIP_SIZE;
-      b.vx = Math.sin(ship.angle) * BULLET_SPEED + ship.vx * 0.3;
-      b.vy = -Math.cos(ship.angle) * BULLET_SPEED + ship.vy * 0.3;
+      // Fire downward from belly of ship
+      b.x = ship.x;
+      b.y = ship.y + SHIP_SIZE;
+      // Slight aim based on active thrusters (moving left = bullets angle slightly left)
+      const aimX = ship.vx * 0.15;
+      b.vx = aimX;
+      b.vy = BULLET_SPEED;
       b.life = BULLET_LIFE;
       return;
     }
@@ -945,46 +946,37 @@ function restartRound() {
 function updatePlaying(dt) {
   const cfg = ROUNDS[currentRound];
 
-  // Rotation
-  const rotForce = 3.5; // angular acceleration
-  const rotDamp = 0.88;  // damping
-  if (keys['ArrowLeft'] || touchLeft) {
-    ship.angVel -= rotForce * dt;
-  }
-  if (keys['ArrowRight'] || touchRight) {
-    ship.angVel += rotForce * dt;
-  }
-  ship.angVel *= rotDamp;
-  ship.angle += ship.angVel * dt * 60;
+  // ── Side Thrusters ──
+  // Left thruster: fires down-left at 45°, pushes ship up-right
+  // Right thruster: fires down-right at 45°, pushes ship up-left
+  // Both together: horizontal cancels, net upward thrust
+  const thrustPower = 0.09;
+  const THRUSTER_ANGLE = Math.PI / 4; // 45 degrees
+  const leftOn = (keys['ArrowLeft'] || touchLeft) && ship.fuel > 0;
+  const rightOn = (keys['ArrowRight'] || touchRight) && ship.fuel > 0;
+  const upOn = (keys['ArrowUp'] || touchThrust) && ship.fuel > 0;
 
-  // Main thrust
-  const thrustPower = 0.12;
-  ship.thrusting = false;
-  if ((keys['ArrowUp'] || touchThrust) && ship.fuel > 0) {
-    ship.thrusting = true;
-    // Thrust in the direction the nose is pointing
-    // angle=0 = up. Nose direction: (sin(angle), -cos(angle))
-    ship.vx += Math.sin(ship.angle) * thrustPower * dt * 60;
-    ship.vy += -Math.cos(ship.angle) * thrustPower * dt * 60;
-    ship.fuel -= dt * 60; // ~1 fuel per frame
-    // Throttled thrust SFX
+  ship.thrustL = leftOn || upOn;
+  ship.thrustR = rightOn || upOn;
+
+  if (ship.thrustL) {
+    // Left thruster pushes up and to the right
+    ship.vx += Math.sin(THRUSTER_ANGLE) * thrustPower * dt * 60;   // rightward
+    ship.vy += -Math.cos(THRUSTER_ANGLE) * thrustPower * dt * 60;  // upward
+    ship.fuel -= dt * 60 * 0.5;
+    spawnThrusterParticle(-1); // left nozzle
+  }
+  if (ship.thrustR) {
+    // Right thruster pushes up and to the left
+    ship.vx += -Math.sin(THRUSTER_ANGLE) * thrustPower * dt * 60;  // leftward
+    ship.vy += -Math.cos(THRUSTER_ANGLE) * thrustPower * dt * 60;  // upward
+    ship.fuel -= dt * 60 * 0.5;
+    spawnThrusterParticle(1);  // right nozzle
+  }
+
+  // Thrust SFX (throttled)
+  if (ship.thrustL || ship.thrustR) {
     if (Date.now() - lastThrustSfx > 80) { sfxThrust(); lastThrustSfx = Date.now(); }
-
-    // Thrust particles
-    if (Math.random() < 0.7) {
-      const ex = ship.x - Math.sin(ship.angle) * SHIP_SIZE;
-      const ey = ship.y + Math.cos(ship.angle) * SHIP_SIZE;
-      spawnParticle(
-        ex + (Math.random() - 0.5) * 4,
-        ey + (Math.random() - 0.5) * 4,
-        -Math.sin(ship.angle) * (-1.5 + Math.random() * -1) + (Math.random() - 0.5) * 0.5,
-        Math.cos(ship.angle) * (1.5 + Math.random()) + (Math.random() - 0.5) * 0.5,
-        0.3 + Math.random() * 0.3,
-        1.5 + Math.random() * 1.5,
-        Math.random() < 0.5 ? '#ff6622' : '#ffaa22',
-        0
-      );
-    }
   }
   ship.fuel = Math.max(0, ship.fuel);
 
@@ -1009,16 +1001,13 @@ function updatePlaying(dt) {
   if (shipBottom >= terrainAtShip) {
     // Check if on landing pad
     const onPad = ship.x >= padLeft && ship.x <= padRight;
-    const angleDeg = Math.abs(radToDeg(ship.angle) % 360);
-    const effectiveAngle = angleDeg > 180 ? 360 - angleDeg : angleDeg;
     const landingOk = Math.abs(ship.vy) <= MAX_LAND_VY &&
-                      Math.abs(ship.vx) <= MAX_LAND_VX &&
-                      effectiveAngle <= MAX_LAND_ANGLE;
+                      Math.abs(ship.vx) <= MAX_LAND_VX;
 
     if (onPad && landingOk) {
       // Successful landing
       ship.y = terrainAtShip - SHIP_SIZE;
-      ship.vx = 0; ship.vy = 0; ship.angVel = 0;
+      ship.vx = 0; ship.vy = 0;
       // Score: fuel bonus + health bonus + round multiplier
       roundScore = Math.floor(ship.fuel) * 2 + ship.health * 3 + (currentRound + 1) * 50;
       score += roundScore;
@@ -1034,16 +1023,6 @@ function updatePlaying(dt) {
     }
   }
 
-  // Rotation thruster particles + SFX
-  if (keys['ArrowLeft'] || touchLeft) {
-    spawnRotParticle(1);
-    if (Date.now() - lastRotSfx > 120) { sfxRotate(); lastRotSfx = Date.now(); }
-  }
-  if (keys['ArrowRight'] || touchRight) {
-    spawnRotParticle(-1);
-    if (Date.now() - lastRotSfx > 120) { sfxRotate(); lastRotSfx = Date.now(); }
-  }
-
   // Held fire (Space key or touch fire button)
   if ((keys['Space'] || touchFire) && ship.armed) {
     fireBullet();
@@ -1055,18 +1034,22 @@ function updatePlaying(dt) {
   updateParticles(dt);
 }
 
-function spawnRotParticle(side) {
-  // side: 1 = left thruster (rotating left), -1 = right thruster
-  if (Math.random() > 0.4) return;
-  const ox = Math.cos(ship.angle) * SHIP_SIZE * side * 0.7;
-  const oy = Math.sin(ship.angle) * SHIP_SIZE * side * 0.7;
+function spawnThrusterParticle(side) {
+  // side: -1 = left nozzle, 1 = right nozzle
+  if (Math.random() > 0.6) return;
+  // Nozzle positions at bottom corners of the ship
+  const nozzleX = ship.x + side * SHIP_SIZE * 0.7;
+  const nozzleY = ship.y + SHIP_SIZE * 0.7;
+  // Exhaust fires at 45° outward-downward
+  const exVx = side * (1.5 + Math.random()) + (Math.random() - 0.5) * 0.4;
+  const exVy = (1.5 + Math.random()) + (Math.random() - 0.5) * 0.4;
   spawnParticle(
-    ship.x + ox, ship.y + oy,
-    (Math.random() - 0.5) * 1.5 + Math.cos(ship.angle) * side * 2,
-    (Math.random() - 0.5) * 1.5 + Math.sin(ship.angle) * side * 2,
-    0.15 + Math.random() * 0.1,
-    1,
-    '#88ccff',
+    nozzleX + (Math.random() - 0.5) * 3,
+    nozzleY + (Math.random() - 0.5) * 2,
+    exVx, exVy,
+    0.25 + Math.random() * 0.2,
+    1.5 + Math.random() * 1.5,
+    Math.random() < 0.5 ? '#ff6622' : '#ffaa22',
     0
   );
 }
@@ -1154,62 +1137,113 @@ function drawTerrain() {
 
 function drawShip() {
   if (state === STATE.CRASHED) return;
+  const S = SHIP_SIZE;
 
   ctx.save();
   ctx.translate(ship.x, ship.y);
-  ctx.rotate(ship.angle);
+  // No rotation — ship always upright
 
-  // Ship body (triangle lander shape)
-  ctx.fillStyle = '#ccddee';
-  ctx.strokeStyle = '#8899aa';
-  ctx.lineWidth = 1.5;
-
-  // Main body
-  ctx.beginPath();
-  ctx.moveTo(0, -SHIP_SIZE);          // nose
-  ctx.lineTo(-SHIP_SIZE * 0.7, SHIP_SIZE * 0.5);  // bottom-left
-  ctx.lineTo(-SHIP_SIZE * 0.4, SHIP_SIZE);         // leg left
-  ctx.lineTo(SHIP_SIZE * 0.4, SHIP_SIZE);          // leg right
-  ctx.lineTo(SHIP_SIZE * 0.7, SHIP_SIZE * 0.5);   // bottom-right
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Cockpit window
-  ctx.fillStyle = '#44aaff';
-  ctx.beginPath();
-  ctx.moveTo(0, -SHIP_SIZE * 0.6);
-  ctx.lineTo(-SHIP_SIZE * 0.25, SHIP_SIZE * 0.05);
-  ctx.lineTo(SHIP_SIZE * 0.25, SHIP_SIZE * 0.05);
-  ctx.closePath();
-  ctx.fill();
-
-  // Landing legs
+  // ── Landing legs (wide stance) ──
   ctx.strokeStyle = '#8899aa';
   ctx.lineWidth = 2;
+  // Left leg
   ctx.beginPath();
-  ctx.moveTo(-SHIP_SIZE * 0.4, SHIP_SIZE);
-  ctx.lineTo(-SHIP_SIZE * 0.6, SHIP_SIZE + 5);
-  ctx.moveTo(SHIP_SIZE * 0.4, SHIP_SIZE);
-  ctx.lineTo(SHIP_SIZE * 0.6, SHIP_SIZE + 5);
+  ctx.moveTo(-S * 0.5, S * 0.6);
+  ctx.lineTo(-S * 1.1, S + 6);
   ctx.stroke();
-
-  // Leg feet
+  // Right leg
+  ctx.beginPath();
+  ctx.moveTo(S * 0.5, S * 0.6);
+  ctx.lineTo(S * 1.1, S + 6);
+  ctx.stroke();
+  // Feet (wide pads)
   ctx.strokeStyle = '#aabbcc';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.moveTo(-SHIP_SIZE * 0.75, SHIP_SIZE + 5);
-  ctx.lineTo(-SHIP_SIZE * 0.45, SHIP_SIZE + 5);
-  ctx.moveTo(SHIP_SIZE * 0.45, SHIP_SIZE + 5);
-  ctx.lineTo(SHIP_SIZE * 0.75, SHIP_SIZE + 5);
+  ctx.moveTo(-S * 1.3, S + 6);
+  ctx.lineTo(-S * 0.85, S + 6);
+  ctx.moveTo(S * 0.85, S + 6);
+  ctx.lineTo(S * 1.3, S + 6);
   ctx.stroke();
 
-  // Armed indicator
+  // ── Main body (wide boxy lander) ──
+  ctx.fillStyle = '#c0ccdd';
+  ctx.strokeStyle = '#778899';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-S * 0.9, S * 0.6);   // bottom-left
+  ctx.lineTo(-S * 0.7, -S * 0.3);  // upper-left
+  ctx.lineTo(-S * 0.3, -S * 0.6);  // top-left shoulder
+  ctx.lineTo(S * 0.3, -S * 0.6);   // top-right shoulder
+  ctx.lineTo(S * 0.7, -S * 0.3);   // upper-right
+  ctx.lineTo(S * 0.9, S * 0.6);    // bottom-right
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // ── Dome / cockpit window ──
+  ctx.fillStyle = '#44aaff';
+  ctx.strokeStyle = '#3388cc';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, -S * 0.55, S * 0.35, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // ── Side thruster nozzles ──
+  // Left nozzle (angled outward)
+  ctx.fillStyle = ship.thrustL ? '#ffaa44' : '#667788';
+  ctx.strokeStyle = '#556677';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-S * 0.75, S * 0.3);
+  ctx.lineTo(-S * 1.05, S * 0.7);
+  ctx.lineTo(-S * 0.8, S * 0.7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Right nozzle (angled outward)
+  ctx.fillStyle = ship.thrustR ? '#ffaa44' : '#667788';
+  ctx.beginPath();
+  ctx.moveTo(S * 0.75, S * 0.3);
+  ctx.lineTo(S * 1.05, S * 0.7);
+  ctx.lineTo(S * 0.8, S * 0.7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // ── Belly gun ──
+  ctx.fillStyle = ship.armed ? '#ff6644' : '#556677';
+  ctx.fillRect(-2, S * 0.5, 4, S * 0.3);
+  // Gun barrel tip
+  ctx.fillStyle = ship.armed ? '#ff4422' : '#445566';
+  ctx.fillRect(-1.5, S * 0.75, 3, 3);
+
+  // ── Panel detail lines ──
+  ctx.strokeStyle = '#8899aa';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(-S * 0.4, -S * 0.1);
+  ctx.lineTo(S * 0.4, -S * 0.1);
+  ctx.moveTo(-S * 0.5, S * 0.2);
+  ctx.lineTo(S * 0.5, S * 0.2);
+  ctx.stroke();
+
+  // ── Armed indicator light ──
   if (ship.armed) {
     ctx.fillStyle = '#ff4444';
     ctx.beginPath();
-    ctx.arc(0, SHIP_SIZE * 0.3, 2, 0, Math.PI * 2);
+    ctx.arc(0, S * 0.05, 2, 0, Math.PI * 2);
     ctx.fill();
+    // Glow
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.arc(0, S * 0.05, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
   }
 
   ctx.restore();
@@ -1285,27 +1319,28 @@ function drawHUD() {
   ctx.fillStyle = '#88aacc';
   ctx.font = '10px monospace';
 
-  const angleDeg = radToDeg(ship.angle) % 360;
-  const dispAngle = angleDeg > 180 ? angleDeg - 360 : angleDeg < -180 ? angleDeg + 360 : angleDeg;
-
-  ctx.fillText('VEL', col2 - 40, labelY + 12);
+  ctx.fillText('V-SPD', col2 - 40, labelY + 12);
   ctx.fillStyle = Math.abs(ship.vy) > MAX_LAND_VY ? '#ff4444' : '#44ff88';
   ctx.font = '13px monospace';
   ctx.fillText(`${ship.vy.toFixed(1)}`, col2 - 40, labelY + 26);
 
   ctx.fillStyle = '#88aacc';
   ctx.font = '10px monospace';
-  ctx.fillText('H-VEL', col2 + 40, labelY + 12);
+  ctx.fillText('H-SPD', col2 + 40, labelY + 12);
   ctx.fillStyle = Math.abs(ship.vx) > MAX_LAND_VX ? '#ff4444' : '#44ff88';
   ctx.font = '13px monospace';
   ctx.fillText(`${ship.vx.toFixed(1)}`, col2 + 40, labelY + 26);
 
+  // Thruster status
   ctx.fillStyle = '#88aacc';
   ctx.font = '10px monospace';
-  ctx.fillText('ANGLE', col2 - 40, labelY + 44);
-  ctx.fillStyle = Math.abs(dispAngle) > MAX_LAND_ANGLE ? '#ff4444' : '#44ff88';
+  ctx.fillText('THRUST', col2, labelY + 44);
   ctx.font = '13px monospace';
-  ctx.fillText(`${dispAngle.toFixed(1)}°`, col2 - 40, labelY + 58);
+  const thrustStatus = (ship.thrustL && ship.thrustR) ? 'BOTH' :
+                       ship.thrustL ? 'LEFT' :
+                       ship.thrustR ? 'RIGHT' : '--';
+  ctx.fillStyle = (ship.thrustL || ship.thrustR) ? '#ffaa44' : '#556677';
+  ctx.fillText(thrustStatus, col2, labelY + 58);
 
   // Altitude
   const alt = Math.max(0, getTerrainY(ship.x) - (ship.y + SHIP_SIZE));
@@ -1441,8 +1476,9 @@ function drawOverlay() {
 
     ctx.fillStyle = '#88aacc';
     ctx.font = '12px monospace';
-    ctx.fillText('Arrow Keys: Rotate & Thrust', W / 2, H * 0.40);
-    ctx.fillText('Shift: Arm Weapons  |  Space: Fire', W / 2, H * 0.44);
+    ctx.fillText('Left/Right: Side thrusters', W / 2, H * 0.38);
+    ctx.fillText('Both or Up: Boost upward', W / 2, H * 0.42);
+    ctx.fillText('Shift: Arm Weapons  |  Space: Fire down', W / 2, H * 0.46);
     ctx.fillText('Land safely on the green pad!', W / 2, H * 0.50);
     ctx.fillText('M: Mute/Unmute', W / 2, H * 0.54);
 
@@ -1506,12 +1542,9 @@ function drawOverlay() {
     ctx.fillStyle = '#ff8866';
     ctx.font = '11px monospace';
     let reason = 'Hit terrain too hard';
-    const angleDeg = Math.abs(radToDeg(ship.angle) % 360);
-    const effectiveAngle = angleDeg > 180 ? 360 - angleDeg : angleDeg;
-    if (effectiveAngle > MAX_LAND_ANGLE) reason = 'Angle too steep';
+    if (!(ship.x >= padLeft && ship.x <= padRight)) reason = 'Missed the landing pad';
     else if (Math.abs(ship.vy) > MAX_LAND_VY) reason = 'Descent too fast';
-    else if (Math.abs(ship.vx) > MAX_LAND_VX) reason = 'Horizontal speed too high';
-    else if (!(ship.x >= padLeft && ship.x <= padRight)) reason = 'Missed the landing pad';
+    else if (Math.abs(ship.vx) > MAX_LAND_VX) reason = 'Drifting too fast sideways';
     ctx.fillText(reason, W / 2, WORLD_BOTTOM * 0.44);
 
     ctx.fillStyle = '#ffcc44';
