@@ -292,28 +292,16 @@ let touchThrust = false, touchLeft = false, touchRight = false;
 let touchFire = false;
 let isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// Touch button zones (in canvas-normalized coords 0-1, relative to full W×H)
-const TOUCH_BTNS = {
-  rotL:   { x:0.02, y:0.56, w:0.17, h:0.14, label:'\u25C0' },
-  rotR:   { x:0.21, y:0.56, w:0.17, h:0.14, label:'\u25B6' },
-  thrust: { x:0.33, y:0.50, w:0.34, h:0.21, label:'BOOST' },
-  fire:   { x:0.72, y:0.50, w:0.26, h:0.21, label:'FIRE' },
-};
+// Touch zones: left half = left booster, right half = right booster, bottom panel = fire
+const PANEL_ZONE = WORLD_BOTTOM / H; // ~0.792 — everything below this is the HUD/fire zone
 
 canvas.addEventListener('touchstart', e => { e.preventDefault(); handleTouchEvent(e); }, { passive: false });
 canvas.addEventListener('touchmove', e => { e.preventDefault(); handleTouchEvent(e); }, { passive: false });
-canvas.addEventListener('touchend', e => {
-  e.preventDefault();
-  handleTouchEvent(e);
-}, { passive: false });
+canvas.addEventListener('touchend', e => { e.preventDefault(); handleTouchEvent(e); }, { passive: false });
 canvas.addEventListener('touchcancel', e => {
   e.preventDefault();
   touchThrust = false; touchLeft = false; touchRight = false; touchFire = false;
 }, { passive: false });
-
-function hitBtn(tx, ty, btn) {
-  return tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h;
-}
 
 function handleTouchEvent(e) {
   isMobile = true;
@@ -327,13 +315,19 @@ function handleTouchEvent(e) {
     const tx = (e.touches[i].clientX - r.left) / r.width;
     const ty = (e.touches[i].clientY - r.top) / r.height;
 
-    if (hitBtn(tx, ty, TOUCH_BTNS.rotL)) touchLeft = true;
-    if (hitBtn(tx, ty, TOUCH_BTNS.rotR)) touchRight = true;
-    if (hitBtn(tx, ty, TOUCH_BTNS.thrust)) touchThrust = true;
-    if (hitBtn(tx, ty, TOUCH_BTNS.fire)) touchFire = true;
+    if (ty >= PANEL_ZONE) {
+      // Bottom panel = fire
+      touchFire = true;
+    } else if (tx < 0.5) {
+      // Left half of game area = left booster
+      touchLeft = true;
+    } else {
+      // Right half of game area = right booster
+      touchRight = true;
+    }
   }
 
-  // Tap to advance state (when no touches active = just released)
+  // Tap to advance state
   if (e.type === 'touchstart') {
     if (state === STATE.TITLE) { startGame(); startMusic(); return; }
     if (state === STATE.ROUND_INTRO) { state = STATE.PLAYING; return; }
@@ -341,55 +335,6 @@ function handleTouchEvent(e) {
     if (state === STATE.CRASHED) { restartRound(); return; }
     if (state === STATE.WIN) { state = STATE.TITLE; return; }
   }
-}
-
-function drawTouchControls() {
-  if (!isMobile || state !== STATE.PLAYING) return;
-
-  ctx.save();
-  // Draw buttons in same coord space as hit detection (full canvas W×H)
-  const btns = TOUCH_BTNS;
-  for (const key in btns) {
-    const b = btns[key];
-    const bx = b.x * W, by = b.y * H;
-    const bw = b.w * W, bh = b.h * H;
-
-    // Highlight if active
-    let active = false;
-    if (key === 'rotL' && touchLeft) active = true;
-    if (key === 'rotR' && touchRight) active = true;
-    if (key === 'thrust' && touchThrust) active = true;
-    if (key === 'fire' && touchFire) active = true;
-
-    ctx.fillStyle = active ? 'rgba(100,200,255,0.25)' : 'rgba(100,150,200,0.10)';
-    ctx.strokeStyle = active ? 'rgba(100,200,255,0.5)' : 'rgba(100,150,200,0.2)';
-    ctx.lineWidth = 1.5;
-
-    // Rounded rect
-    const cr = 6;
-    ctx.beginPath();
-    ctx.moveTo(bx + cr, by);
-    ctx.lineTo(bx + bw - cr, by);
-    ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + cr);
-    ctx.lineTo(bx + bw, by + bh - cr);
-    ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - cr, by + bh);
-    ctx.lineTo(bx + cr, by + bh);
-    ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - cr);
-    ctx.lineTo(bx, by + cr);
-    ctx.quadraticCurveTo(bx, by, bx + cr, by);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Label
-    ctx.fillStyle = active ? 'rgba(200,230,255,0.7)' : 'rgba(150,180,200,0.4)';
-    ctx.font = key === 'thrust' ? 'bold 11px monospace' : '13px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(b.label, bx + bw / 2, by + bh / 2);
-  }
-  ctx.textBaseline = 'alphabetic';
-  ctx.restore();
 }
 
 // ── Screen Shake ──
@@ -1609,9 +1554,9 @@ function drawOverlay() {
     ctx.fillStyle = '#88aacc';
     ctx.font = '12px monospace';
     if (isMobile) {
-      ctx.fillText('Use on-screen buttons to fly', W / 2, H * 0.38);
-      ctx.fillText('L/R: Side thrusters  BOOST: Upward', W / 2, H * 0.42);
-      ctx.fillText('FIRE: Shoot downward', W / 2, H * 0.46);
+      ctx.fillText('Tap left side: Left booster', W / 2, H * 0.38);
+      ctx.fillText('Tap right side: Right booster', W / 2, H * 0.42);
+      ctx.fillText('Tap bottom panel: Fire weapons', W / 2, H * 0.46);
     } else {
       ctx.fillText('Left/Right: Side thrusters', W / 2, H * 0.38);
       ctx.fillText('Both or Up: Boost upward', W / 2, H * 0.42);
@@ -2082,7 +2027,6 @@ function draw() {
     drawParticles();
     drawShip();
     ctx.restore();
-    drawTouchControls();
     drawHUD();
   }
 
