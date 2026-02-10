@@ -62,15 +62,31 @@ function mulberry32(seed) {
 // padAlien: if true, an alien patrols across the landing pad firing upward
 const ROUNDS = [
   { round:1,  gravity:0.03, fuel:800, ammo:0,  padWidth:100,padPlacementRisk:0.0, terrainRoughness:0.08, terrainSeed:101, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
-  { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.1, terrainRoughness:0.15, terrainSeed:202, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
-  { round:3,  gravity:0.04, fuel:650, ammo:15, padWidth:80, padPlacementRisk:0.15,terrainRoughness:0.22, terrainSeed:303, enemyRate:0.3, enemyTypes:['turret'],          bombSpeed:1.2, blastRadius:25, requiredKills:0, padAlien:false },
-  { round:4,  gravity:0.04, fuel:600, ammo:20, padWidth:74, padPlacementRisk:0.2, terrainRoughness:0.28, terrainSeed:404, enemyRate:0.4, enemyTypes:['turret'],          bombSpeed:1.4, blastRadius:28, requiredKills:0, padAlien:false },
-  { round:5,  gravity:0.05, fuel:560, ammo:25, padWidth:68, padPlacementRisk:0.3, terrainRoughness:0.32, terrainSeed:505, enemyRate:0.5, enemyTypes:['turret','alien'],  bombSpeed:1.5, blastRadius:30, requiredKills:0, padAlien:false },
-  { round:6,  gravity:0.05, fuel:520, ammo:30, padWidth:62, padPlacementRisk:0.4, terrainRoughness:0.36, terrainSeed:606, enemyRate:0.6, enemyTypes:['turret','alien'],  bombSpeed:1.7, blastRadius:32, requiredKills:0, padAlien:true  },
-  { round:7,  gravity:0.06, fuel:500, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:707, enemyRate:0.7, enemyTypes:['turret','alien'],  bombSpeed:1.9, blastRadius:35, requiredKills:1, padAlien:true  },
-  { round:8,  gravity:0.06, fuel:480, ammo:35, padWidth:50, padPlacementRisk:0.5, terrainRoughness:0.44, terrainSeed:808, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.1, blastRadius:38, requiredKills:1, padAlien:true  },
-  { round:9,  gravity:0.07, fuel:460, ammo:40, padWidth:46, padPlacementRisk:0.6, terrainRoughness:0.48, terrainSeed:909, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.3, blastRadius:40, requiredKills:2, padAlien:true  },
-  { round:10, gravity:0.07, fuel:440, ammo:45, padWidth:42, padPlacementRisk:0.7, terrainRoughness:0.52, terrainSeed:1010,enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:2.5, blastRadius:42, requiredKills:2, padAlien:true  },
+  { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.25,terrainRoughness:0.15, terrainSeed:217, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
+  { round:3,  gravity:0.04, fuel:650, ammo:15, padWidth:80, padPlacementRisk:0.3, terrainRoughness:0.22, terrainSeed:318, enemyRate:0.4, enemyTypes:['turret'],          bombSpeed:1.8, blastRadius:25, requiredKills:0, padAlien:false },
+  { round:4,  gravity:0.04, fuel:600, ammo:20, padWidth:74, padPlacementRisk:0.35,terrainRoughness:0.28, terrainSeed:419, enemyRate:0.5, enemyTypes:['turret'],          bombSpeed:2.0, blastRadius:28, requiredKills:0, padAlien:false },
+  { round:5,  gravity:0.05, fuel:560, ammo:25, padWidth:68, padPlacementRisk:0.4, terrainRoughness:0.32, terrainSeed:520, enemyRate:0.6, enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:30, requiredKills:0, padAlien:false },
+  { round:6,  gravity:0.05, fuel:520, ammo:30, padWidth:62, padPlacementRisk:0.45,terrainRoughness:0.36, terrainSeed:621, enemyRate:0.7, enemyTypes:['turret','alien'],  bombSpeed:2.4, blastRadius:32, requiredKills:0, padAlien:true  },
+  { round:7,  gravity:0.06, fuel:500, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:722, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:35, requiredKills:1, padAlien:true  },
+  { round:8,  gravity:0.06, fuel:480, ammo:35, padWidth:50, padPlacementRisk:0.45,terrainRoughness:0.44, terrainSeed:823, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.8, blastRadius:38, requiredKills:1, padAlien:true  },
+  { round:9,  gravity:0.07, fuel:460, ammo:40, padWidth:46, padPlacementRisk:0.35,terrainRoughness:0.48, terrainSeed:942, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:3.0, blastRadius:40, requiredKills:2, padAlien:true  },
+  { round:10, gravity:0.07, fuel:440, ammo:45, padWidth:42, padPlacementRisk:0.45,terrainRoughness:0.52, terrainSeed:1043,enemyRate:1.1, enemyTypes:['turret','alien'],  bombSpeed:3.2, blastRadius:42, requiredKills:2, padAlien:true  },
+];
+
+// ── Tips (shown on game over screen) ──
+const TIPS = [
+  'Hold both L+R or Up to hover in place',
+  'Tap thrusters in short bursts to save fuel',
+  'Kill the red pad alien before attempting to land',
+  'Watch the radar to track incoming bombs',
+  'Shoot enemy bombs out of the air with Space',
+  'Later rounds require enemy kills before landing',
+  'Arm weapons with Shift, then fire with Space',
+  'Counter-thrust early to stop horizontal drift',
+  'The V-SPD and H-SPD gauges turn red when unsafe',
+  'You gain an extra life for each successful landing',
+  'Bullets fire downward — hover above enemies to hit them',
+  'Use short taps, not long holds, for precise control',
 ];
 
 // ── Landing Thresholds (constant across rounds) ──
@@ -162,11 +178,19 @@ function generateTerrain(roundCfg) {
   const segW = W / n;
 
   // Find suitable flat-ish spots and rank them by difficulty
+  // After round 1, exclude center zone so player must fly sideways
+  const centerZone = roundCfg.round > 1 ? 0.15 : 0; // exclude 15% around center
+  const wallBuffer = 8; // keep pad away from screen edges (in segments)
   const candidates = [];
-  for (let i = 2; i < n - 2; i++) {
+  for (let i = wallBuffer; i < n - wallBuffer; i++) {
     const slope = Math.abs(heights[i + 1] - heights[i - 1]) / (2 * segW);
-    const edgeness = Math.abs(i - n / 2) / (n / 2); // 0=center, 1=edge
-    const difficulty = slope * 0.6 + edgeness * 0.4;
+    const centerDist = Math.abs(i - n / 2) / (n / 2); // 0=center, 1=edge
+    // Skip center zone after round 1
+    if (centerDist < centerZone) continue;
+    // Skip positions too close to walls (extra safety for later rounds)
+    const xPos = i * segW;
+    if (xPos < padW + 15 || xPos > W - padW - 15) continue;
+    const difficulty = slope * 0.6 + centerDist * 0.4;
     candidates.push({ i, difficulty });
   }
   candidates.sort((a, b) => a.difficulty - b.difficulty);
@@ -271,23 +295,22 @@ function handleKeyAction(code, down) {
 // ── Touch Controls ──
 let touchThrust = false, touchLeft = false, touchRight = false;
 let touchFire = false, touchArm = false;
-let isMobile = false;
+let isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// Touch button zones (in canvas-normalized coords 0-1)
+// Touch button zones (in canvas-normalized coords 0-1, relative to full W×H)
 const TOUCH_BTNS = {
-  rotL:   { x:0.02, y:0.60, w:0.13, h:0.12, label:'\u25C0' },  // left arrow
-  rotR:   { x:0.17, y:0.60, w:0.13, h:0.12, label:'\u25B6' },  // right arrow
-  thrust: { x:0.37, y:0.55, w:0.26, h:0.18, label:'BOOST' },
-  arm:    { x:0.70, y:0.60, w:0.13, h:0.12, label:'ARM' },
-  fire:   { x:0.85, y:0.55, w:0.13, h:0.18, label:'FIRE' },
+  rotL:   { x:0.02, y:0.56, w:0.17, h:0.14, label:'\u25C0' },
+  rotR:   { x:0.21, y:0.56, w:0.17, h:0.14, label:'\u25B6' },
+  thrust: { x:0.33, y:0.50, w:0.34, h:0.21, label:'BOOST' },
+  arm:    { x:0.70, y:0.56, w:0.14, h:0.14, label:'ARM' },
+  fire:   { x:0.85, y:0.50, w:0.14, h:0.21, label:'FIRE' },
 };
 
 canvas.addEventListener('touchstart', e => { e.preventDefault(); handleTouchEvent(e); }, { passive: false });
 canvas.addEventListener('touchmove', e => { e.preventDefault(); handleTouchEvent(e); }, { passive: false });
 canvas.addEventListener('touchend', e => {
   e.preventDefault();
-  handleTouchEvent(e);
-  // Check for arm toggle on release
+  // Check for arm toggle on release (before resetting touch states)
   if (e.changedTouches.length > 0) {
     const r = canvas.getBoundingClientRect();
     for (let i = 0; i < e.changedTouches.length; i++) {
@@ -299,6 +322,11 @@ canvas.addEventListener('touchend', e => {
       }
     }
   }
+  handleTouchEvent(e);
+}, { passive: false });
+canvas.addEventListener('touchcancel', e => {
+  e.preventDefault();
+  touchThrust = false; touchLeft = false; touchRight = false; touchFire = false;
 }, { passive: false });
 
 function hitBtn(tx, ty, btn) {
@@ -337,12 +365,12 @@ function drawTouchControls() {
   if (!isMobile || state !== STATE.PLAYING) return;
 
   ctx.save();
-  // Draw in world space but at bottom — buttons are overlaid on the game area
+  // Draw buttons in same coord space as hit detection (full canvas W×H)
   const btns = TOUCH_BTNS;
   for (const key in btns) {
     const b = btns[key];
-    const bx = b.x * W, by = b.y * WORLD_BOTTOM;
-    const bw = b.w * W, bh = b.h * WORLD_BOTTOM;
+    const bx = b.x * W, by = b.y * H;
+    const bw = b.w * W, bh = b.h * H;
 
     // Highlight if active
     let active = false;
@@ -689,13 +717,14 @@ function fireBomb(ex, ey) {
       const b = bombs[i];
       b.active = true;
       b.x = ex; b.y = ey;
-      // Aim accurately at player (slight spread)
-      const dx = ship.x - ex, dy = ship.y - ey;
+      // Aim at player — lead the target slightly
+      const dx = ship.x + ship.vx * 15 - ex;
+      const dy = ship.y + ship.vy * 10 - ey;
       const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const speed = cfg.bombSpeed;
-      b.vx = (dx / d) * speed + (Math.random() - 0.5) * 0.15;
-      b.vy = (dy / d) * speed + (Math.random() - 0.5) * 0.15;
-      b.life = 4;
+      const speed = Math.max(cfg.bombSpeed, 1.8); // minimum speed so bombs fly far
+      b.vx = (dx / d) * speed + (Math.random() - 0.5) * 0.4;
+      b.vy = (dy / d) * speed + (Math.random() - 0.5) * 0.4;
+      b.life = 5;
       return;
     }
   }
@@ -1084,6 +1113,9 @@ function updatePlaying(dt) {
 
   // Gravity
   ship.vy += cfg.gravity * dt * 60;
+
+  // Horizontal drag — gentle dampening to reduce drift
+  ship.vx *= 0.997;
 
   // Apply velocity
   ship.x += ship.vx * dt * 60;
@@ -1618,11 +1650,17 @@ function drawOverlay() {
 
     ctx.fillStyle = '#88aacc';
     ctx.font = '12px monospace';
-    ctx.fillText('Left/Right: Side thrusters', W / 2, H * 0.38);
-    ctx.fillText('Both or Up: Boost upward', W / 2, H * 0.42);
-    ctx.fillText('Shift: Arm Weapons  |  Space: Fire down', W / 2, H * 0.46);
+    if (isMobile) {
+      ctx.fillText('Use on-screen buttons to fly', W / 2, H * 0.38);
+      ctx.fillText('L/R: Side thrusters  BOOST: Upward', W / 2, H * 0.42);
+      ctx.fillText('ARM: Toggle weapons  FIRE: Shoot down', W / 2, H * 0.46);
+    } else {
+      ctx.fillText('Left/Right: Side thrusters', W / 2, H * 0.38);
+      ctx.fillText('Both or Up: Boost upward', W / 2, H * 0.42);
+      ctx.fillText('Shift: Arm Weapons  |  Space: Fire down', W / 2, H * 0.46);
+    }
     ctx.fillText('Land safely on the green pad!', W / 2, H * 0.50);
-    ctx.fillText('M: Mute/Unmute', W / 2, H * 0.54);
+    if (!isMobile) ctx.fillText('M: Mute/Unmute', W / 2, H * 0.54);
 
     if (hiScore > 0) {
       ctx.fillStyle = '#ffcc44';
@@ -1633,7 +1671,7 @@ function drawOverlay() {
     ctx.fillStyle = '#ffcc44';
     ctx.font = '14px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText('PRESS ENTER TO START', W / 2, H * 0.66);
+    if (blink) ctx.fillText(isMobile ? 'TAP TO START' : 'PRESS ENTER TO START', W / 2, H * 0.66);
   }
 
   if (state === STATE.ROUND_INTRO) {
@@ -1660,7 +1698,7 @@ function drawOverlay() {
     ctx.fillStyle = '#ffcc44';
     ctx.font = '12px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText('PRESS ENTER', W / 2, WORLD_BOTTOM * 0.62);
+    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, WORLD_BOTTOM * 0.62);
   }
 
   if (state === STATE.LANDED) {
@@ -1676,34 +1714,70 @@ function drawOverlay() {
     ctx.fillStyle = '#ffcc44';
     ctx.font = '12px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText(currentRound < ROUNDS.length - 1 ? 'PRESS ENTER FOR NEXT ROUND' : 'PRESS ENTER', W / 2, WORLD_BOTTOM * 0.58);
+    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : (currentRound < ROUNDS.length - 1 ? 'PRESS ENTER FOR NEXT ROUND' : 'PRESS ENTER'), W / 2, WORLD_BOTTOM * 0.58);
   }
 
   if (state === STATE.CRASHED) {
-    ctx.fillStyle = '#ff4444';
-    ctx.font = 'bold 24px monospace';
-    ctx.fillText(lives <= 0 ? 'GAME OVER' : 'CRASHED!', W / 2, WORLD_BOTTOM * 0.30);
-
     if (lives > 0) {
-      // Show lives remaining
+      // Still have lives — show crash + remaining
+      ctx.fillStyle = '#ff4444';
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText('CRASHED!', W / 2, WORLD_BOTTOM * 0.30);
+
       ctx.fillStyle = '#ff8866';
       ctx.font = '11px monospace';
       ctx.fillText(`Lives remaining: ${lives}`, W / 2, WORLD_BOTTOM * 0.40);
-    } else {
-      // Game over
-      ctx.fillStyle = '#88aacc';
+
+      ctx.fillStyle = '#ffcc44';
       ctx.font = '12px monospace';
-      ctx.fillText(`Final Score: ${score}`, W / 2, WORLD_BOTTOM * 0.40);
+      const blink = Math.sin(Date.now() * 0.004) > 0;
+      if (blink) ctx.fillText(isMobile ? 'TAP TO RETRY' : 'PRESS ENTER TO RETRY', W / 2, WORLD_BOTTOM * 0.55);
+    } else {
+      // Game over — full screen overlay with tips
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = '#ff4444';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText('GAME OVER', W / 2, H * 0.18);
+
+      ctx.fillStyle = '#88aacc';
+      ctx.font = '13px monospace';
+      ctx.fillText('Well played!', W / 2, H * 0.25);
+
+      ctx.fillStyle = '#44ff88';
+      ctx.font = '12px monospace';
+      ctx.fillText(`Reached: Round ${currentRound + 1} of ${ROUNDS.length}`, W / 2, H * 0.32);
+      ctx.fillText(`Score: ${score}`, W / 2, H * 0.37);
+      ctx.fillText(`Enemies destroyed: ${enemiesKilled}`, W / 2, H * 0.42);
+
       if (score >= hiScore && score > 0) {
         ctx.fillStyle = '#ffcc44';
-        ctx.fillText('NEW HIGH SCORE!', W / 2, WORLD_BOTTOM * 0.46);
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText('NEW HIGH SCORE!', W / 2, H * 0.48);
+      } else {
+        ctx.fillStyle = '#88aacc';
+        ctx.font = '11px monospace';
+        ctx.fillText(`Best: ${hiScore}`, W / 2, H * 0.48);
       }
-    }
 
-    ctx.fillStyle = '#ffcc44';
-    ctx.font = '12px monospace';
-    const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText(lives > 0 ? 'PRESS ENTER TO RETRY' : 'PRESS ENTER', W / 2, WORLD_BOTTOM * 0.55);
+      // Random tips (pick 3 based on a seeded selection)
+      ctx.fillStyle = '#667799';
+      ctx.font = '10px monospace';
+      ctx.fillText('--- TIPS ---', W / 2, H * 0.57);
+      ctx.fillStyle = '#8899bb';
+      ctx.font = '9px monospace';
+      const tipSeed = (score * 7 + currentRound * 13) % TIPS.length;
+      for (let ti = 0; ti < 3; ti++) {
+        const tip = TIPS[(tipSeed + ti) % TIPS.length];
+        ctx.fillText(tip, W / 2, H * 0.62 + ti * 0.05 * H);
+      }
+
+      ctx.fillStyle = '#ffcc44';
+      ctx.font = '12px monospace';
+      const blink = Math.sin(Date.now() * 0.004) > 0;
+      if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.85);
+    }
   }
 
   if (state === STATE.WIN) {
@@ -1733,7 +1807,7 @@ function drawOverlay() {
     ctx.fillStyle = '#ffcc44';
     ctx.font = '12px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText('PRESS ENTER', W / 2, H * 0.52);
+    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.52);
   }
 }
 
