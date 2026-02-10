@@ -58,23 +58,24 @@ function mulberry32(seed) {
 }
 
 // ── Round Configuration (data-driven) ──
+// requiredKills: must kill this many enemies before landing is allowed
+// padAlien: if true, an alien patrols across the landing pad firing upward
 const ROUNDS = [
-  { round:1,  gravity:0.04, fuel:600, ammo:0,  padWidth:80, padPlacementRisk:0.1, terrainRoughness:0.25, terrainSeed:101, enemyRate:0,    enemyTypes:[],                  bombSpeed:0,   blastRadius:0  },
-  { round:2,  gravity:0.04, fuel:550, ammo:15, padWidth:72, padPlacementRisk:0.2, terrainRoughness:0.30, terrainSeed:202, enemyRate:0.3,  enemyTypes:['turret'],          bombSpeed:1.0, blastRadius:25 },
-  { round:3,  gravity:0.05, fuel:520, ammo:20, padWidth:68, padPlacementRisk:0.3, terrainRoughness:0.35, terrainSeed:303, enemyRate:0.4,  enemyTypes:['turret'],          bombSpeed:1.2, blastRadius:28 },
-  { round:4,  gravity:0.05, fuel:500, ammo:25, padWidth:64, padPlacementRisk:0.35,terrainRoughness:0.38, terrainSeed:404, enemyRate:0.5,  enemyTypes:['turret','alien'],  bombSpeed:1.3, blastRadius:30 },
-  { round:5,  gravity:0.06, fuel:480, ammo:30, padWidth:60, padPlacementRisk:0.4, terrainRoughness:0.40, terrainSeed:505, enemyRate:0.6,  enemyTypes:['turret','alien'],  bombSpeed:1.5, blastRadius:32 },
-  { round:6,  gravity:0.06, fuel:460, ammo:30, padWidth:56, padPlacementRisk:0.5, terrainRoughness:0.42, terrainSeed:606, enemyRate:0.7,  enemyTypes:['turret','alien'],  bombSpeed:1.6, blastRadius:35 },
-  { round:7,  gravity:0.07, fuel:440, ammo:35, padWidth:52, padPlacementRisk:0.55,terrainRoughness:0.45, terrainSeed:707, enemyRate:0.8,  enemyTypes:['turret','alien'],  bombSpeed:1.8, blastRadius:38 },
-  { round:8,  gravity:0.07, fuel:420, ammo:35, padWidth:48, padPlacementRisk:0.6, terrainRoughness:0.48, terrainSeed:808, enemyRate:0.9,  enemyTypes:['turret','alien'],  bombSpeed:2.0, blastRadius:40 },
-  { round:9,  gravity:0.08, fuel:400, ammo:40, padWidth:44, padPlacementRisk:0.7, terrainRoughness:0.50, terrainSeed:909, enemyRate:1.0,  enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:42 },
-  { round:10, gravity:0.08, fuel:380, ammo:45, padWidth:40, padPlacementRisk:0.8, terrainRoughness:0.55, terrainSeed:1010,enemyRate:1.2,  enemyTypes:['turret','alien'],  bombSpeed:2.5, blastRadius:45 },
+  { round:1,  gravity:0.03, fuel:800, ammo:0,  padWidth:100,padPlacementRisk:0.0, terrainRoughness:0.08, terrainSeed:101, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
+  { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.1, terrainRoughness:0.15, terrainSeed:202, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
+  { round:3,  gravity:0.04, fuel:650, ammo:15, padWidth:80, padPlacementRisk:0.15,terrainRoughness:0.22, terrainSeed:303, enemyRate:0.3, enemyTypes:['turret'],          bombSpeed:1.2, blastRadius:25, requiredKills:0, padAlien:false },
+  { round:4,  gravity:0.04, fuel:600, ammo:20, padWidth:74, padPlacementRisk:0.2, terrainRoughness:0.28, terrainSeed:404, enemyRate:0.4, enemyTypes:['turret'],          bombSpeed:1.4, blastRadius:28, requiredKills:0, padAlien:false },
+  { round:5,  gravity:0.05, fuel:560, ammo:25, padWidth:68, padPlacementRisk:0.3, terrainRoughness:0.32, terrainSeed:505, enemyRate:0.5, enemyTypes:['turret','alien'],  bombSpeed:1.5, blastRadius:30, requiredKills:0, padAlien:false },
+  { round:6,  gravity:0.05, fuel:520, ammo:30, padWidth:62, padPlacementRisk:0.4, terrainRoughness:0.36, terrainSeed:606, enemyRate:0.6, enemyTypes:['turret','alien'],  bombSpeed:1.7, blastRadius:32, requiredKills:0, padAlien:true  },
+  { round:7,  gravity:0.06, fuel:500, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:707, enemyRate:0.7, enemyTypes:['turret','alien'],  bombSpeed:1.9, blastRadius:35, requiredKills:1, padAlien:true  },
+  { round:8,  gravity:0.06, fuel:480, ammo:35, padWidth:50, padPlacementRisk:0.5, terrainRoughness:0.44, terrainSeed:808, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.1, blastRadius:38, requiredKills:1, padAlien:true  },
+  { round:9,  gravity:0.07, fuel:460, ammo:40, padWidth:46, padPlacementRisk:0.6, terrainRoughness:0.48, terrainSeed:909, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.3, blastRadius:40, requiredKills:2, padAlien:true  },
+  { round:10, gravity:0.07, fuel:440, ammo:45, padWidth:42, padPlacementRisk:0.7, terrainRoughness:0.52, terrainSeed:1010,enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:2.5, blastRadius:42, requiredKills:2, padAlien:true  },
 ];
 
 // ── Landing Thresholds (constant across rounds) ──
-const MAX_LAND_VY = 1.5;    // max downward speed to survive
-const MAX_LAND_VX = 0.8;    // max horizontal speed
-const MAX_LAND_ANGLE = 15;  // degrees from vertical
+const MAX_LAND_VY = 2.2;    // max downward speed to survive (lenient)
+const MAX_LAND_VX = 1.2;    // max horizontal speed (lenient)
 
 // ── Game World Constants ──
 const WORLD_TOP = 0;
@@ -91,6 +92,9 @@ let stateTimer = 0;
 let score = 0;
 let roundScore = 0;
 let enemiesKilled = 0;
+let roundKills = 0;      // kills this round (for required-kill check)
+let lives = 3;
+const MAX_LIVES = 6;
 let hiScore = parseInt(localStorage.getItem('spaceLanderHi') || '0', 10);
 
 // ── Ship State ──
@@ -518,7 +522,8 @@ function updateBullets(dt) {
           e.stateTimer = 0;
           spawnExplosion(e.x, e.y);
           enemiesKilled++;
-          score += e.type === 'turret' ? 100 : 200;
+          roundKills++;
+          score += e.type === 'turret' ? 100 : e.type === 'padAlien' ? 300 : 200;
           sfxEnemyDie();
         } else {
           sfxEnemyHit();
@@ -635,6 +640,47 @@ function spawnEnemy(type) {
   }
 }
 
+function spawnPadAlien() {
+  for (let i = 0; i < MAX_ENEMIES; i++) {
+    if (!enemies[i].active) {
+      const e = enemies[i];
+      e.active = true;
+      e.type = 'padAlien';
+      e.state = 'telegraph';
+      e.stateTimer = 0;
+      sfxTelegraph();
+      // Start at one end of the pad
+      const padMid = (padLeft + padRight) / 2;
+      const padY = getTerrainY(padMid);
+      e.x = padLeft;
+      e.y = padY - 10; // just above pad surface
+      e.vx = 0.5;
+      e.vy = 0;
+      e.hp = 2;
+      e.maxHp = 2;
+      e.fireTimer = 1.5;
+      e.originX = padMid;
+      e.patrolRange = (padRight - padLeft) / 2;
+      e.patrolDir = 1;
+      return;
+    }
+  }
+}
+
+function fireBombDir(ex, ey, vx, vy) {
+  sfxBombShot();
+  for (let i = 0; i < MAX_BOMBS; i++) {
+    if (!bombs[i].active) {
+      const b = bombs[i];
+      b.active = true;
+      b.x = ex; b.y = ey;
+      b.vx = vx; b.vy = vy;
+      b.life = 3;
+      return;
+    }
+  }
+}
+
 function fireBomb(ex, ey) {
   sfxBombShot();
   const cfg = ROUNDS[currentRound];
@@ -643,12 +689,12 @@ function fireBomb(ex, ey) {
       const b = bombs[i];
       b.active = true;
       b.x = ex; b.y = ey;
-      // Aim loosely at player
+      // Aim accurately at player (slight spread)
       const dx = ship.x - ex, dy = ship.y - ey;
       const d = Math.sqrt(dx * dx + dy * dy) || 1;
       const speed = cfg.bombSpeed;
-      b.vx = (dx / d) * speed + (Math.random() - 0.5) * 0.3;
-      b.vy = (dy / d) * speed + (Math.random() - 0.5) * 0.3;
+      b.vx = (dx / d) * speed + (Math.random() - 0.5) * 0.15;
+      b.vy = (dy / d) * speed + (Math.random() - 0.5) * 0.15;
       b.life = 4;
       return;
     }
@@ -705,7 +751,21 @@ function updateEnemies(dt) {
       e.fireTimer -= dt;
       if (e.fireTimer <= 0) {
         fireBomb(e.x, e.y - 8);
-        e.fireTimer = 2.5 + Math.random() * 2;
+        e.fireTimer = 2 + Math.random() * 1.5;
+      }
+    } else if (e.type === 'padAlien') {
+      // Patrol across the landing pad, fire upward
+      e.x += e.vx * dt * 60;
+      // Bounce within pad bounds
+      if (e.x <= padLeft + 5 || e.x >= padRight - 5) {
+        e.vx *= -1;
+        e.patrolDir *= -1;
+      }
+      e.fireTimer -= dt;
+      if (e.fireTimer <= 0) {
+        // Fire straight up along landing path
+        fireBombDir(e.x, e.y - 6, 0, -ROUNDS[currentRound].bombSpeed);
+        e.fireTimer = 1.2 + Math.random() * 1;
       }
     } else { // alien
       // Patrol back and forth
@@ -724,7 +784,7 @@ function updateEnemies(dt) {
       e.fireTimer -= dt;
       if (e.fireTimer <= 0) {
         fireBomb(e.x, e.y + 6);
-        e.fireTimer = 2 + Math.random() * 2.5;
+        e.fireTimer = 1.5 + Math.random() * 2;
       }
     }
   }
@@ -766,18 +826,10 @@ function updateBombs(dt) {
 function explodeBomb(x, y, radius) {
   sfxBombExplode();
   triggerShake(4);
-  // Damage player if within blast radius
+  // Hit by bomb = instant death
   const dToShip = dist(x, y, ship.x, ship.y);
   if (dToShip < radius && state === STATE.PLAYING) {
-    const dmg = Math.floor(25 * (1 - dToShip / radius));
-    ship.health -= Math.max(5, dmg);
-    if (ship.health <= 0) {
-      ship.health = 0;
-      spawnExplosion(ship.x, ship.y);
-      state = STATE.CRASHED;
-      stateTimer = 0;
-      sfxCrash();
-    }
+    crashShip();
   }
 
   // Visual explosion
@@ -838,6 +890,26 @@ function drawEnemies() {
       ctx.fillRect(-2, -10, 4, 10);
       ctx.restore();
       // HP pips
+      drawEnemyHP(e);
+    } else if (e.type === 'padAlien') {
+      // Pad alien — crawls across the pad, distinct red/orange color
+      ctx.fillStyle = '#cc4422';
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y, 8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Antennae
+      ctx.strokeStyle = '#ff6644';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(e.x - 3, e.y - 5);
+      ctx.lineTo(e.x - 5, e.y - 10);
+      ctx.moveTo(e.x + 3, e.y - 5);
+      ctx.lineTo(e.x + 5, e.y - 10);
+      ctx.stroke();
+      // Eyes
+      ctx.fillStyle = '#ff0';
+      ctx.fillRect(e.x - 3, e.y - 2, 2, 2);
+      ctx.fillRect(e.x + 1, e.y - 2, 2, 2);
       drawEnemyHP(e);
     } else { // alien
       // Body
@@ -908,6 +980,7 @@ function startGame() {
   currentRound = 0;
   score = 0;
   enemiesKilled = 0;
+  lives = 3;
   startRound();
 }
 
@@ -919,6 +992,11 @@ function startRound() {
   clearParticles();
   clearBullets();
   clearEnemies();
+  roundKills = 0;
+  // Spawn pad alien if configured
+  if (cfg.padAlien) {
+    spawnPadAlien();
+  }
   state = STATE.ROUND_INTRO;
   stateTimer = 0;
 }
@@ -938,7 +1016,31 @@ function nextRound() {
   }
 }
 
+function crashShip() {
+  spawnExplosion(ship.x, ship.y);
+  lives--;
+  if (lives <= 0) {
+    state = STATE.CRASHED;  // game over
+    stateTimer = 0;
+    sfxCrash();
+    stopMusic();
+    if (score > hiScore) {
+      hiScore = score;
+      localStorage.setItem('spaceLanderHi', String(hiScore));
+    }
+  } else {
+    state = STATE.CRASHED;
+    stateTimer = 0;
+    sfxCrash();
+  }
+}
+
 function restartRound() {
+  if (lives <= 0) {
+    // Game over — back to title
+    state = STATE.TITLE;
+    return;
+  }
   startRound();
 }
 
@@ -987,9 +1089,11 @@ function updatePlaying(dt) {
   ship.x += ship.vx * dt * 60;
   ship.y += ship.vy * dt * 60;
 
-  // Wrap horizontally
-  if (ship.x < 0) ship.x += W;
-  if (ship.x > W) ship.x -= W;
+  // Wall collision (no wrapping — hit the edge = crash)
+  if (ship.x - SHIP_SIZE < 2 || ship.x + SHIP_SIZE > W - 2) {
+    crashShip();
+    return;
+  }
 
   // Clamp top
   if (ship.y < 10) { ship.y = 10; ship.vy = Math.max(0, ship.vy); }
@@ -1003,23 +1107,37 @@ function updatePlaying(dt) {
     const onPad = ship.x >= padLeft && ship.x <= padRight;
     const landingOk = Math.abs(ship.vy) <= MAX_LAND_VY &&
                       Math.abs(ship.vx) <= MAX_LAND_VX;
+    // Check required kills
+    const killsOk = roundKills >= cfg.requiredKills;
+    // Check no pad alien blocking
+    let padBlocked = false;
+    for (let i = 0; i < MAX_ENEMIES; i++) {
+      const e = enemies[i];
+      if (e.active && e.type === 'padAlien' && e.state === 'active') {
+        padBlocked = true;
+        break;
+      }
+    }
 
-    if (onPad && landingOk) {
+    if (onPad && landingOk && killsOk && !padBlocked) {
       // Successful landing
       ship.y = terrainAtShip - SHIP_SIZE;
       ship.vx = 0; ship.vy = 0;
-      // Score: fuel bonus + health bonus + round multiplier
-      roundScore = Math.floor(ship.fuel) * 2 + ship.health * 3 + (currentRound + 1) * 50;
+      // Score: fuel bonus + lives bonus + round multiplier
+      roundScore = Math.floor(ship.fuel) * 2 + lives * 50 + (currentRound + 1) * 50;
       score += roundScore;
+      // Gain a life
+      lives = Math.min(lives + 1, MAX_LIVES);
       state = STATE.LANDED;
       stateTimer = 0;
       sfxLanding();
+    } else if (onPad && landingOk && (!killsOk || padBlocked)) {
+      // Bounced off — can't land yet, push back up gently
+      ship.y = terrainAtShip - SHIP_SIZE - 2;
+      ship.vy = -1;
     } else {
       // Crash!
-      spawnExplosion(ship.x, ship.y);
-      state = STATE.CRASHED;
-      stateTimer = 0;
-      sfxCrash();
+      crashShip();
     }
   }
 
@@ -1084,6 +1202,21 @@ function drawStars() {
 }
 
 function drawTerrain() {
+  // Wall borders (thin lines on left and right edges)
+  ctx.strokeStyle = '#ff4444';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(1, 0); ctx.lineTo(1, WORLD_BOTTOM);
+  ctx.moveTo(W - 1, 0); ctx.lineTo(W - 1, WORLD_BOTTOM);
+  ctx.stroke();
+  // Subtle glow
+  ctx.strokeStyle = 'rgba(255,68,68,0.2)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(2, 0); ctx.lineTo(2, WORLD_BOTTOM);
+  ctx.moveTo(W - 2, 0); ctx.lineTo(W - 2, WORLD_BOTTOM);
+  ctx.stroke();
+
   // Fill terrain
   ctx.beginPath();
   ctx.moveTo(0, H);
@@ -1310,8 +1443,17 @@ function drawHUD() {
   const ammoFrac = ship.maxAmmo > 0 ? ship.ammo / ship.maxAmmo : 0;
   drawBar(col1, labelY + 32, 100, 10, ammoFrac, '#ffaa00', 'AMMO');
 
-  // Health bar
-  drawBar(col1, labelY + 54, 100, 10, ship.health / ship.maxHealth, '#ff4444', 'HULL');
+  // Lives display
+  ctx.fillStyle = '#88aacc';
+  ctx.font = '9px monospace';
+  ctx.fillText('LIVES', col1, labelY + 57);
+  for (let li = 0; li < lives; li++) {
+    ctx.fillStyle = '#44ff88';
+    ctx.fillRect(col1 + 32 + li * 12, labelY + 50, 8, 8);
+    ctx.strokeStyle = '#226644';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(col1 + 32 + li * 12, labelY + 50, 8, 8);
+  }
 
   // ── Center column: Flight data ──
   const col2 = W / 2;
@@ -1505,10 +1647,14 @@ function drawOverlay() {
     const cfg = ROUNDS[currentRound];
     ctx.fillStyle = '#88aacc';
     ctx.font = '11px monospace';
-    ctx.fillText(`Gravity: ${(cfg.gravity * 100).toFixed(0)}%  |  Fuel: ${cfg.fuel}`, W / 2, WORLD_BOTTOM * 0.45);
-    if (cfg.enemyRate > 0) {
+    ctx.fillText(`Fuel: ${cfg.fuel}  |  Lives: ${lives}`, W / 2, WORLD_BOTTOM * 0.45);
+    if (cfg.enemyRate > 0 || cfg.padAlien) {
       ctx.fillStyle = '#ff8866';
-      ctx.fillText(`Enemies active!`, W / 2, WORLD_BOTTOM * 0.50);
+      let warning = 'Enemies active!';
+      if (cfg.requiredKills > 0) warning += ` Kill ${cfg.requiredKills} to land.`;
+      if (cfg.padAlien) warning = 'Alien on pad! Clear it to land.';
+      if (cfg.padAlien && cfg.requiredKills > 0) warning = `Clear pad + kill ${cfg.requiredKills} to land!`;
+      ctx.fillText(warning, W / 2, WORLD_BOTTOM * 0.50);
     }
 
     ctx.fillStyle = '#ffcc44';
@@ -1536,21 +1682,28 @@ function drawOverlay() {
   if (state === STATE.CRASHED) {
     ctx.fillStyle = '#ff4444';
     ctx.font = 'bold 24px monospace';
-    ctx.fillText('CRASHED!', W / 2, WORLD_BOTTOM * 0.35);
+    ctx.fillText(lives <= 0 ? 'GAME OVER' : 'CRASHED!', W / 2, WORLD_BOTTOM * 0.30);
 
-    // Show what went wrong
-    ctx.fillStyle = '#ff8866';
-    ctx.font = '11px monospace';
-    let reason = 'Hit terrain too hard';
-    if (!(ship.x >= padLeft && ship.x <= padRight)) reason = 'Missed the landing pad';
-    else if (Math.abs(ship.vy) > MAX_LAND_VY) reason = 'Descent too fast';
-    else if (Math.abs(ship.vx) > MAX_LAND_VX) reason = 'Drifting too fast sideways';
-    ctx.fillText(reason, W / 2, WORLD_BOTTOM * 0.44);
+    if (lives > 0) {
+      // Show lives remaining
+      ctx.fillStyle = '#ff8866';
+      ctx.font = '11px monospace';
+      ctx.fillText(`Lives remaining: ${lives}`, W / 2, WORLD_BOTTOM * 0.40);
+    } else {
+      // Game over
+      ctx.fillStyle = '#88aacc';
+      ctx.font = '12px monospace';
+      ctx.fillText(`Final Score: ${score}`, W / 2, WORLD_BOTTOM * 0.40);
+      if (score >= hiScore && score > 0) {
+        ctx.fillStyle = '#ffcc44';
+        ctx.fillText('NEW HIGH SCORE!', W / 2, WORLD_BOTTOM * 0.46);
+      }
+    }
 
     ctx.fillStyle = '#ffcc44';
     ctx.font = '12px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText('PRESS ENTER TO RETRY', W / 2, WORLD_BOTTOM * 0.55);
+    if (blink) ctx.fillText(lives > 0 ? 'PRESS ENTER TO RETRY' : 'PRESS ENTER', W / 2, WORLD_BOTTOM * 0.55);
   }
 
   if (state === STATE.WIN) {
