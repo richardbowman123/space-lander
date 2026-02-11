@@ -63,16 +63,26 @@ function mulberry32(seed) {
 // worldWidth: total horizontal world size in pixels (screen = 480px)
 // padZone: 'center' = pad under spawn, 'screen' = pad on initial screen, 'anywhere' = pad hidden off-screen
 const ROUNDS = [
-  { round:1,  gravity:0.03, fuel:800, ammo:0,  padWidth:100,padPlacementRisk:0.0, terrainRoughness:0.08, terrainSeed:101, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false, worldWidth:1440, padZone:'center'   },
-  { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.25,terrainRoughness:0.15, terrainSeed:217, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false, worldWidth:1440, padZone:'screen'   },
-  { round:3,  gravity:0.04, fuel:650, ammo:20, padWidth:80, padPlacementRisk:0.3, terrainRoughness:0.22, terrainSeed:318, enemyRate:0.7, enemyTypes:['turret'],          bombSpeed:2.0, blastRadius:25, requiredKills:0, padAlien:false, worldWidth:1680, padZone:'screen'   },
-  { round:4,  gravity:0.04, fuel:800, ammo:25, padWidth:74, padPlacementRisk:0.35,terrainRoughness:0.28, terrainSeed:419, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:28, requiredKills:0, padAlien:false, worldWidth:1920, padZone:'anywhere' },
-  { round:5,  gravity:0.05, fuel:850, ammo:30, padWidth:68, padPlacementRisk:0.4, terrainRoughness:0.32, terrainSeed:520, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.4, blastRadius:30, requiredKills:0, padAlien:true,  worldWidth:2160, padZone:'anywhere' },
-  { round:6,  gravity:0.05, fuel:900, ammo:35, padWidth:62, padPlacementRisk:0.45,terrainRoughness:0.36, terrainSeed:621, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:32, requiredKills:1, padAlien:true,  worldWidth:2400, padZone:'anywhere' },
-  { round:7,  gravity:0.06, fuel:950, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:722, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:35, requiredKills:1, padAlien:true,  worldWidth:2880, padZone:'anywhere' },
-  { round:8,  gravity:0.06, fuel:950, ammo:35, padWidth:50, padPlacementRisk:0.45,terrainRoughness:0.44, terrainSeed:823, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.8, blastRadius:38, requiredKills:1, padAlien:true,  worldWidth:3120, padZone:'anywhere' },
-  { round:9,  gravity:0.07, fuel:1000,ammo:40, padWidth:46, padPlacementRisk:0.35,terrainRoughness:0.48, terrainSeed:942, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:3.0, blastRadius:40, requiredKills:2, padAlien:true,  worldWidth:3360, padZone:'anywhere' },
-  { round:10, gravity:0.07, fuel:1000,ammo:45, padWidth:42, padPlacementRisk:0.45,terrainRoughness:0.52, terrainSeed:1043,enemyRate:1.1, enemyTypes:['turret','alien'],  bombSpeed:3.2, blastRadius:42, requiredKills:2, padAlien:true,  worldWidth:3360, padZone:'anywhere' },
+  { round:1,  gravity:0.03, fuel:800, ammo:0,  padWidth:100,padPlacementRisk:0.0, terrainRoughness:0.08, terrainSeed:101, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false, worldWidth:1440, padZone:'center',
+    planetName:'The Moon', planetDesc:'Low gravity, smooth craters. A gentle start.', terrainColors:{top:'#888888',mid:'#666666',bot:'#444444',stroke:'#999999'} },
+  { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.25,terrainRoughness:0.15, terrainSeed:217, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false, worldWidth:1440, padZone:'screen',
+    planetName:'Mars', planetDesc:'Red dust and rocky ridges. Watch your fuel.', terrainColors:{top:'#884422',mid:'#773318',bot:'#552211',stroke:'#aa5533'} },
+  { round:3,  gravity:0.04, fuel:650, ammo:20, padWidth:80, padPlacementRisk:0.3, terrainRoughness:0.22, terrainSeed:318, enemyRate:0.7, enemyTypes:['turret'],          bombSpeed:2.0, blastRadius:25, requiredKills:0, padAlien:false, worldWidth:1680, padZone:'screen',
+    planetName:'Europa', planetDesc:'Frozen ice fields. Hostile turrets detected!', terrainColors:{top:'#556688',mid:'#445577',bot:'#334466',stroke:'#6688aa'} },
+  { round:4,  gravity:0.04, fuel:800, ammo:25, padWidth:74, padPlacementRisk:0.35,terrainRoughness:0.28, terrainSeed:419, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:28, requiredKills:0, padAlien:false, worldWidth:1920, padZone:'anywhere',
+    planetName:'Venus', planetDesc:'Thick atmosphere, hidden landing zone. Explore!', terrainColors:{top:'#887744',mid:'#776633',bot:'#554422',stroke:'#aa9955'} },
+  { round:5,  gravity:0.05, fuel:850, ammo:30, padWidth:68, padPlacementRisk:0.4, terrainRoughness:0.32, terrainSeed:520, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.4, blastRadius:30, requiredKills:0, padAlien:true,  worldWidth:2160, padZone:'anywhere',
+    planetName:'Titan', planetDesc:'Orange haze and hostile aliens guard the pad.', terrainColors:{top:'#885522',mid:'#774411',bot:'#553300',stroke:'#aa6633'} },
+  { round:6,  gravity:0.05, fuel:900, ammo:35, padWidth:62, padPlacementRisk:0.45,terrainRoughness:0.36, terrainSeed:621, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:32, requiredKills:1, padAlien:true,  worldWidth:2400, padZone:'anywhere',
+    planetName:'Mercury', planetDesc:'Scorched surface. Kill 1 guard to land.', terrainColors:{top:'#666055',mid:'#555044',bot:'#444033',stroke:'#887766'} },
+  { round:7,  gravity:0.06, fuel:950, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:722, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:35, requiredKills:1, padAlien:true,  worldWidth:2880, padZone:'anywhere',
+    planetName:'Io', planetDesc:'Sulphur volcanoes and strong gravity. Stay sharp!', terrainColors:{top:'#888833',mid:'#777722',bot:'#555511',stroke:'#aaaa44'} },
+  { round:8,  gravity:0.06, fuel:950, ammo:35, padWidth:50, padPlacementRisk:0.45,terrainRoughness:0.44, terrainSeed:823, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.8, blastRadius:38, requiredKills:1, padAlien:true,  worldWidth:3120, padZone:'anywhere',
+    planetName:'Ceres', planetDesc:'Dark dwarf planet. Tiny pad, heavy resistance.', terrainColors:{top:'#554466',mid:'#443355',bot:'#332244',stroke:'#665577'} },
+  { round:9,  gravity:0.07, fuel:1000,ammo:40, padWidth:46, padPlacementRisk:0.35,terrainRoughness:0.48, terrainSeed:942, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:3.0, blastRadius:40, requiredKills:2, padAlien:true,  worldWidth:3360, padZone:'anywhere',
+    planetName:'Pluto', planetDesc:'Freezing wasteland. Kill 2 guards to land.', terrainColors:{top:'#667788',mid:'#556677',bot:'#445566',stroke:'#7799aa'} },
+  { round:10, gravity:0.07, fuel:1000,ammo:45, padWidth:42, padPlacementRisk:0.45,terrainRoughness:0.52, terrainSeed:1043,enemyRate:1.1, enemyTypes:['turret','alien'],  bombSpeed:3.2, blastRadius:42, requiredKills:2, padAlien:true,  worldWidth:3360, padZone:'anywhere',
+    planetName:'Planet X', planetDesc:'Volcanic hellscape. The final challenge!', terrainColors:{top:'#662222',mid:'#551111',bot:'#330808',stroke:'#883333'} },
 ];
 
 // ── Tips (shown on game over screen) ──
@@ -126,6 +136,10 @@ let hiScore = parseInt(localStorage.getItem('spaceLanderHi') || '0', 10);
 
 // ── Ship State ──
 let ship = {};
+
+// ── Astronaut Animation ──
+let astro = { phase:0, timer:0, x:0, y:0, targetX:0, legFrame:0, flagX:0, flagY:0, flagHeight:0 };
+// phase: 0=inactive, 1=emerge, 2=walk, 3=plant, 4=done
 function resetShip() {
   ship = {
     x: worldWidth / 2,
@@ -314,12 +328,15 @@ function handleKeyAction(code, down) {
     state = STATE.PLAYING;
   }
   if ((state === STATE.LANDED) && (code === 'Space' || code === 'Enter')) {
+    if (astro.phase < 4) return; // wait for astronaut animation
     nextRound();
   }
   if ((state === STATE.CRASHED) && (code === 'Space' || code === 'Enter')) {
+    if (lives <= 0 && stateTimer < 2.5) return; // wait for game over animation
     restartRound();
   }
   if (state === STATE.WIN && (code === 'Space' || code === 'Enter')) {
+    if (stateTimer < 3.5) return; // wait for celebration
     state = STATE.TITLE;
   }
   // Fire
@@ -372,9 +389,9 @@ function handleTouchEvent(e) {
   if (e.type === 'touchstart') {
     if (state === STATE.TITLE) { startGame(); startMusic(); return; }
     if (state === STATE.ROUND_INTRO) { state = STATE.PLAYING; return; }
-    if (state === STATE.LANDED) { nextRound(); return; }
-    if (state === STATE.CRASHED) { restartRound(); return; }
-    if (state === STATE.WIN) { state = STATE.TITLE; return; }
+    if (state === STATE.LANDED) { if (astro.phase < 4) return; nextRound(); return; }
+    if (state === STATE.CRASHED) { if (lives <= 0 && stateTimer < 2.5) return; restartRound(); return; }
+    if (state === STATE.WIN) { if (stateTimer < 3.5) return; state = STATE.TITLE; return; }
   }
 }
 
@@ -1049,6 +1066,8 @@ function startRound() {
   clearBullets();
   clearEnemies();
   roundKills = 0;
+  // Reset astronaut animation
+  astro = { phase:0, timer:0, x:0, y:0, targetX:0, legFrame:0, flagX:0, flagY:0, flagHeight:0 };
   // Snap camera to ship position (no smooth lag on round start)
   cameraX = clamp(ship.x - W / 2, 0, Math.max(0, worldWidth - W));
   // Regenerate stars for new world size
@@ -1071,6 +1090,8 @@ function nextRound() {
     state = STATE.WIN;
     stateTimer = 0;
     stopMusic();
+    resetWinFireworks();
+    sfxVictory();
     if (score > hiScore) {
       hiScore = score;
       localStorage.setItem('spaceLanderHi', String(hiScore));
@@ -1088,6 +1109,7 @@ function crashShip() {
     stateTimer = 0;
     sfxCrash();
     stopMusic();
+    resetEmbers();
     if (score > hiScore) {
       hiScore = score;
       localStorage.setItem('spaceLanderHi', String(hiScore));
@@ -1198,6 +1220,9 @@ function updatePlaying(dt) {
       state = STATE.LANDED;
       stateTimer = 0;
       sfxLanding();
+      // Start astronaut flag-planting animation
+      astro.phase = 1;
+      astro.timer = 0;
     } else if (onPad && landingOk && (!killsOk || padBlocked)) {
       // Bounced off — can't land yet, push back up gently
       ship.y = terrainAtShip - SHIP_SIZE - 2;
@@ -1301,11 +1326,12 @@ function drawTerrain() {
   ctx.lineTo(terrainX[endI], H);
   ctx.closePath();
 
-  // Gradient fill
+  // Gradient fill (per-round planet colours)
+  const tc = ROUNDS[currentRound].terrainColors;
   const grad = ctx.createLinearGradient(0, WORLD_BOTTOM - 200, 0, WORLD_BOTTOM);
-  grad.addColorStop(0, '#553322');
-  grad.addColorStop(0.5, '#443322');
-  grad.addColorStop(1, '#332211');
+  grad.addColorStop(0, tc.top);
+  grad.addColorStop(0.5, tc.mid);
+  grad.addColorStop(1, tc.bot);
   ctx.fillStyle = grad;
   ctx.fill();
 
@@ -1315,7 +1341,7 @@ function drawTerrain() {
     if (i === startI) ctx.moveTo(terrainX[i], terrainY[i]);
     else ctx.lineTo(terrainX[i], terrainY[i]);
   }
-  ctx.strokeStyle = '#886644';
+  ctx.strokeStyle = tc.stroke;
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -1440,6 +1466,284 @@ function drawShip() {
   ctx.stroke();
 
   ctx.restore();
+}
+
+// ── Astronaut Drawing & Animation ──
+function drawAstronaut() {
+  if (astro.phase === 0) return;
+  const ax = astro.x;
+  const ay = astro.y;
+
+  // ── Flag (draw behind astronaut) ──
+  if (astro.phase >= 3 && astro.flagHeight > 0) {
+    const fx = astro.flagX;
+    const fy = astro.flagY;
+    const ph = astro.flagHeight;
+    // Pole
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.lineTo(fx, fy - ph);
+    ctx.stroke();
+    // Pennant (when pole tall enough)
+    if (ph > 5) {
+      const wave = Math.sin(Date.now() * 0.006) * 1;
+      ctx.fillStyle = '#ff4444';
+      ctx.beginPath();
+      ctx.moveTo(fx + 1, fy - ph);
+      ctx.lineTo(fx + 9 + wave, fy - ph + 2.5);
+      ctx.lineTo(fx + 1, fy - ph + 5);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // ── Astronaut figure (~12px tall, Sensible Soccer style) ──
+  // Head (white helmet, 4px diameter)
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(ax, ay - 10, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Visor (gold)
+  ctx.fillStyle = '#ffcc44';
+  ctx.fillRect(ax - 1.5, ay - 11, 3, 1.5);
+
+  // Body (white suit)
+  ctx.fillStyle = '#dddddd';
+  ctx.fillRect(ax - 2, ay - 7.5, 4, 5);
+  // Backpack
+  ctx.fillStyle = '#999999';
+  ctx.fillRect(ax + 2, ay - 7, 1.5, 3);
+
+  // Legs
+  ctx.strokeStyle = '#cccccc';
+  ctx.lineWidth = 1.5;
+  if (astro.phase === 2) {
+    // Walking: animated legs
+    const lc = Math.sin(astro.legFrame * 10);
+    ctx.beginPath();
+    ctx.moveTo(ax - 1, ay - 2.5);
+    ctx.lineTo(ax - 1 + lc * 2.5, ay);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax + 1, ay - 2.5);
+    ctx.lineTo(ax + 1 - lc * 2.5, ay);
+    ctx.stroke();
+  } else {
+    // Standing
+    ctx.beginPath();
+    ctx.moveTo(ax - 1, ay - 2.5); ctx.lineTo(ax - 2, ay);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax + 1, ay - 2.5); ctx.lineTo(ax + 2, ay);
+    ctx.stroke();
+  }
+
+  // Arms
+  ctx.strokeStyle = '#cccccc';
+  ctx.lineWidth = 1;
+  if (astro.phase === 3) {
+    // Planting: right arm reaches up
+    const reach = clamp(astro.timer / 0.5, 0, 1);
+    const armAng = -Math.PI * 0.3 - reach * Math.PI * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(ax + 2, ay - 6);
+    ctx.lineTo(ax + 2 + Math.cos(armAng) * 5, ay - 6 + Math.sin(armAng) * 5);
+    ctx.stroke();
+    // Left arm at side
+    ctx.beginPath();
+    ctx.moveTo(ax - 2, ay - 6); ctx.lineTo(ax - 4, ay - 3);
+    ctx.stroke();
+  } else if (astro.phase === 4) {
+    // Done: arm pointing at flag
+    ctx.beginPath();
+    ctx.moveTo(ax + 2, ay - 6); ctx.lineTo(ax + 5, ay - 10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax - 2, ay - 6); ctx.lineTo(ax - 4, ay - 3);
+    ctx.stroke();
+  } else {
+    // Default: arms at sides
+    ctx.beginPath();
+    ctx.moveTo(ax - 2, ay - 6); ctx.lineTo(ax - 4, ay - 3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax + 2, ay - 6); ctx.lineTo(ax + 4, ay - 3);
+    ctx.stroke();
+  }
+}
+
+function updateAstronaut(dt) {
+  if (astro.phase === 0) return;
+  astro.timer += dt;
+
+  if (astro.phase === 1) {
+    // Emerge: slide from ship centre down to terrain
+    const progress = clamp(astro.timer / 0.8, 0, 1);
+    const groundY = getTerrainY(ship.x);
+    astro.x = ship.x;
+    astro.y = lerp(ship.y, groundY, progress);
+    if (astro.timer >= 0.8) {
+      astro.phase = 2;
+      astro.timer = 0;
+      astro.targetX = ship.x + 35;
+    }
+  } else if (astro.phase === 2) {
+    // Walk to target
+    const progress = clamp(astro.timer / 1.2, 0, 1);
+    astro.x = lerp(ship.x, astro.targetX, progress);
+    astro.y = getTerrainY(astro.x);
+    astro.legFrame = astro.timer;
+    if (astro.timer >= 1.2) {
+      astro.phase = 3;
+      astro.timer = 0;
+      astro.flagX = astro.x + 4;
+      astro.flagY = getTerrainY(astro.flagX);
+      astro.flagHeight = 0;
+    }
+  } else if (astro.phase === 3) {
+    // Plant flag: pole grows upward
+    const progress = clamp(astro.timer / 1.0, 0, 1);
+    astro.flagHeight = progress * 16;
+    if (astro.timer >= 1.0) {
+      astro.phase = 4;
+      astro.timer = 0;
+      astro.flagHeight = 16;
+    }
+  }
+  // Phase 4: done, static pose
+}
+
+// ── Win Screen Fireworks (screen-space, separate from game particles) ──
+const WIN_FIREWORKS_MAX = 100;
+let winFireworks = [];
+let winFireworkTimer = 0;
+let winFireworkBurstTimer = 0;
+// Ember particles for game over
+const EMBERS_MAX = 40;
+let embers = [];
+
+function resetWinFireworks() {
+  winFireworks = [];
+  winFireworkTimer = 0;
+  winFireworkBurstTimer = 0;
+}
+
+function resetEmbers() {
+  embers = [];
+}
+
+function spawnWinFireworkBurst(bx, by) {
+  const hue = Math.random() * 360;
+  const count = 18 + Math.floor(Math.random() * 14);
+  for (let i = 0; i < count; i++) {
+    if (winFireworks.length >= WIN_FIREWORKS_MAX) break;
+    const ang = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.3;
+    const spd = 60 + Math.random() * 100;
+    const hueOff = (Math.random() - 0.5) * 40;
+    winFireworks.push({
+      x: bx, y: by,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      life: 0.8 + Math.random() * 0.6,
+      maxLife: 0.8 + Math.random() * 0.6,
+      r: 1.5 + Math.random() * 1.5,
+      hue: (hue + hueOff + 360) % 360,
+      trail: []
+    });
+  }
+}
+
+function updateWinFireworks(dt) {
+  winFireworkBurstTimer -= dt;
+  if (winFireworkBurstTimer <= 0) {
+    winFireworkBurstTimer = 0.4 + Math.random() * 0.6;
+    const bx = 60 + Math.random() * (W - 120);
+    const by = 80 + Math.random() * (H * 0.45);
+    spawnWinFireworkBurst(bx, by);
+    sfxFirework();
+  }
+  for (let i = winFireworks.length - 1; i >= 0; i--) {
+    const p = winFireworks[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 50 * dt; // gentle gravity
+    p.vx *= 0.98;
+    p.life -= dt;
+    // Store trail positions
+    if (p.trail.length < 5) p.trail.push({ x: p.x, y: p.y });
+    else { p.trail.shift(); p.trail.push({ x: p.x, y: p.y }); }
+    if (p.life <= 0) {
+      winFireworks.splice(i, 1);
+    }
+  }
+}
+
+function drawWinFireworks() {
+  for (let i = 0; i < winFireworks.length; i++) {
+    const p = winFireworks[i];
+    const alpha = clamp(p.life / p.maxLife, 0, 1);
+    // Trail
+    for (let t = 0; t < p.trail.length; t++) {
+      const ta = alpha * (t / p.trail.length) * 0.4;
+      ctx.fillStyle = hsl(p.hue, 90, 65, ta);
+      ctx.beginPath();
+      ctx.arc(p.trail[t].x, p.trail[t].y, p.r * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Main spark
+    ctx.fillStyle = hsl(p.hue, 90, 70, alpha);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    // Bright core
+    ctx.fillStyle = hsl(p.hue, 40, 95, alpha * 0.8);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// Embers for game over screen
+function spawnEmber() {
+  if (embers.length >= EMBERS_MAX) return;
+  embers.push({
+    x: Math.random() * W,
+    y: H + 5,
+    vx: (Math.random() - 0.5) * 15,
+    vy: -(20 + Math.random() * 40),
+    life: 2.5 + Math.random() * 2,
+    maxLife: 2.5 + Math.random() * 2,
+    r: 1 + Math.random() * 2,
+    hue: Math.random() < 0.5 ? 15 : 30 // red or orange
+  });
+}
+
+function updateEmbers(dt) {
+  for (let i = embers.length - 1; i >= 0; i--) {
+    const e = embers[i];
+    e.x += e.vx * dt;
+    e.y += e.vy * dt;
+    e.vx += (Math.random() - 0.5) * 10 * dt; // drift
+    e.life -= dt;
+    if (e.life <= 0) embers.splice(i, 1);
+  }
+}
+
+function drawEmbers() {
+  for (let i = 0; i < embers.length; i++) {
+    const e = embers[i];
+    const alpha = clamp(e.life / e.maxLife, 0, 1);
+    ctx.fillStyle = hsl(e.hue, 90, 55, alpha * 0.7);
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = hsl(e.hue, 50, 85, alpha * 0.5);
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function drawHUD() {
@@ -1708,43 +2012,74 @@ function drawOverlay() {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 0, W, WORLD_BOTTOM);
 
+    const cfg = ROUNDS[currentRound];
+    const tc = cfg.terrainColors;
+
+    // Round number
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#44ccff';
     ctx.font = 'bold 28px monospace';
-    ctx.fillText(`ROUND ${currentRound + 1}`, W / 2, WORLD_BOTTOM * 0.35);
+    ctx.fillText(`ROUND ${currentRound + 1}`, W / 2, WORLD_BOTTOM * 0.22);
 
-    const cfg = ROUNDS[currentRound];
+    // Planet name (in terrain colour for flavour)
+    ctx.fillStyle = tc.stroke;
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText(cfg.planetName, W / 2, WORLD_BOTTOM * 0.30);
+
+    // Planet description
+    ctx.fillStyle = '#88aacc';
+    ctx.font = '10px monospace';
+    ctx.fillText(cfg.planetDesc, W / 2, WORLD_BOTTOM * 0.37);
+
+    // Stats
     ctx.fillStyle = '#88aacc';
     ctx.font = '11px monospace';
-    ctx.fillText(`Fuel: ${cfg.fuel}  |  Lives: ${lives}`, W / 2, WORLD_BOTTOM * 0.45);
+    ctx.fillText(`Fuel: ${cfg.fuel}  |  Ammo: ${cfg.ammo}  |  Lives: ${lives}`, W / 2, WORLD_BOTTOM * 0.46);
+
+    // Enemy warning
     if (cfg.enemyRate > 0 || cfg.padAlien) {
       ctx.fillStyle = '#ff8866';
+      ctx.font = '10px monospace';
       let warning = 'Enemies active!';
       if (cfg.requiredKills > 0) warning += ` Kill ${cfg.requiredKills} to land.`;
       if (cfg.padAlien) warning = 'Alien on pad! Clear it to land.';
       if (cfg.padAlien && cfg.requiredKills > 0) warning = `Clear pad + kill ${cfg.requiredKills} to land!`;
-      ctx.fillText(warning, W / 2, WORLD_BOTTOM * 0.50);
+      ctx.fillText(warning, W / 2, WORLD_BOTTOM * 0.53);
+    }
+
+    // Pad zone hint
+    if (cfg.padZone === 'anywhere') {
+      ctx.fillStyle = '#667799';
+      ctx.font = '9px monospace';
+      ctx.fillText('Landing pad hidden — use radar to find it', W / 2, WORLD_BOTTOM * 0.59);
     }
 
     ctx.fillStyle = '#ffcc44';
     ctx.font = '12px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, WORLD_BOTTOM * 0.62);
+    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, WORLD_BOTTOM * 0.70);
   }
 
   if (state === STATE.LANDED) {
-    ctx.fillStyle = '#00ff88';
-    ctx.font = 'bold 24px monospace';
-    ctx.fillText('LANDED!', W / 2, WORLD_BOTTOM * 0.35);
+    // Wait for astronaut animation to finish before showing text
+    if (astro.phase >= 4) {
+      const fadeT = clamp((stateTimer - 3.0) / 0.5, 0, 1); // fade in after ~3s
+      ctx.globalAlpha = fadeT;
+      ctx.fillStyle = '#00ff88';
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText('LANDED!', W / 2, WORLD_BOTTOM * 0.35);
 
-    ctx.fillStyle = '#88aacc';
-    ctx.font = '11px monospace';
-    ctx.fillText(`Round score: +${roundScore}`, W / 2, WORLD_BOTTOM * 0.44);
-    ctx.fillText(`Total: ${score}`, W / 2, WORLD_BOTTOM * 0.50);
+      ctx.fillStyle = '#88aacc';
+      ctx.font = '11px monospace';
+      ctx.fillText(`Round score: +${roundScore}`, W / 2, WORLD_BOTTOM * 0.44);
+      ctx.fillText(`Total: ${score}`, W / 2, WORLD_BOTTOM * 0.50);
 
-    ctx.fillStyle = '#ffcc44';
-    ctx.font = '12px monospace';
-    const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : (currentRound < ROUNDS.length - 1 ? 'PRESS ENTER FOR NEXT ROUND' : 'PRESS ENTER'), W / 2, WORLD_BOTTOM * 0.58);
+      ctx.fillStyle = '#ffcc44';
+      ctx.font = '12px monospace';
+      const blink = Math.sin(Date.now() * 0.004) > 0;
+      if (fadeT >= 1 && blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : (currentRound < ROUNDS.length - 1 ? 'PRESS ENTER FOR NEXT ROUND' : 'PRESS ENTER'), W / 2, WORLD_BOTTOM * 0.58);
+      ctx.globalAlpha = 1;
+    }
   }
 
   if (state === STATE.CRASHED) {
@@ -1763,81 +2098,167 @@ function drawOverlay() {
       const blink = Math.sin(Date.now() * 0.004) > 0;
       if (blink) ctx.fillText(isMobile ? 'TAP TO RETRY' : 'PRESS ENTER TO RETRY', W / 2, WORLD_BOTTOM * 0.55);
     } else {
-      // Game over — full screen overlay with tips
-      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      // Game over — full screen overlay with ember particles and fade-in stats
+      ctx.fillStyle = 'rgba(0,0,0,0.80)';
       ctx.fillRect(0, 0, W, H);
 
+      // Draw embers behind text
+      drawEmbers();
+
+      // Pulsing red glow behind GAME OVER
+      const glowPulse = 0.3 + Math.sin(stateTimer * 3) * 0.15;
+      ctx.save();
+      ctx.shadowColor = '#ff2222';
+      ctx.shadowBlur = 25 + Math.sin(stateTimer * 2.5) * 12;
+      ctx.fillStyle = `rgba(255, 68, 68, ${glowPulse})`;
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText('GAME OVER', W / 2, H * 0.18);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+      // Solid text on top
       ctx.fillStyle = '#ff4444';
       ctx.font = 'bold 28px monospace';
       ctx.fillText('GAME OVER', W / 2, H * 0.18);
 
-      ctx.fillStyle = '#88aacc';
-      ctx.font = '13px monospace';
-      ctx.fillText('Well played!', W / 2, H * 0.25);
+      // Sequential fade-in stats (each 0.4s apart, starting at 0.8s)
+      const go1 = clamp((stateTimer - 0.8) / 0.4, 0, 1);
+      const go2 = clamp((stateTimer - 1.2) / 0.4, 0, 1);
+      const go3 = clamp((stateTimer - 1.6) / 0.4, 0, 1);
+      const go4 = clamp((stateTimer - 2.0) / 0.4, 0, 1);
+      const go5 = clamp((stateTimer - 2.4) / 0.4, 0, 1);
 
-      ctx.fillStyle = '#44ff88';
-      ctx.font = '12px monospace';
-      ctx.fillText(`Reached: Round ${currentRound + 1} of ${ROUNDS.length}`, W / 2, H * 0.32);
-      ctx.fillText(`Score: ${score}`, W / 2, H * 0.37);
-      ctx.fillText(`Enemies destroyed: ${enemiesKilled}`, W / 2, H * 0.42);
-
-      if (score >= hiScore && score > 0) {
-        ctx.fillStyle = '#ffcc44';
-        ctx.font = 'bold 12px monospace';
-        ctx.fillText('NEW HIGH SCORE!', W / 2, H * 0.48);
-      } else {
+      if (go1 > 0) {
+        ctx.globalAlpha = go1;
         ctx.fillStyle = '#88aacc';
-        ctx.font = '11px monospace';
-        ctx.fillText(`Best: ${hiScore}`, W / 2, H * 0.48);
+        ctx.font = '13px monospace';
+        ctx.fillText('Well played, pilot.', W / 2, H * 0.26);
       }
-
-      // Random tips (pick 3 based on a seeded selection)
-      ctx.fillStyle = '#667799';
-      ctx.font = '10px monospace';
-      ctx.fillText('--- TIPS ---', W / 2, H * 0.57);
-      ctx.fillStyle = '#8899bb';
-      ctx.font = '9px monospace';
-      const tipSeed = (score * 7 + currentRound * 13) % TIPS.length;
-      for (let ti = 0; ti < 3; ti++) {
-        const tip = TIPS[(tipSeed + ti) % TIPS.length];
-        ctx.fillText(tip, W / 2, H * 0.62 + ti * 0.05 * H);
+      if (go2 > 0) {
+        ctx.globalAlpha = go2;
+        ctx.fillStyle = '#44ff88';
+        ctx.font = '12px monospace';
+        const planetName = ROUNDS[Math.min(currentRound, ROUNDS.length - 1)].planetName;
+        ctx.fillText(`Reached: ${planetName} (Round ${currentRound + 1}/${ROUNDS.length})`, W / 2, H * 0.33);
       }
+      if (go3 > 0) {
+        ctx.globalAlpha = go3;
+        ctx.fillStyle = '#44ff88';
+        ctx.font = '12px monospace';
+        ctx.fillText(`Score: ${score}`, W / 2, H * 0.39);
+        ctx.fillText(`Enemies destroyed: ${enemiesKilled}`, W / 2, H * 0.44);
+      }
+      if (go4 > 0) {
+        ctx.globalAlpha = go4;
+        if (score >= hiScore && score > 0) {
+          ctx.fillStyle = '#ffcc44';
+          ctx.font = 'bold 12px monospace';
+          ctx.fillText('NEW HIGH SCORE!', W / 2, H * 0.50);
+        } else {
+          ctx.fillStyle = '#88aacc';
+          ctx.font = '11px monospace';
+          ctx.fillText(`Best: ${hiScore}`, W / 2, H * 0.50);
+        }
+      }
+      if (go5 > 0) {
+        ctx.globalAlpha = go5;
+        // Tips
+        ctx.fillStyle = '#667799';
+        ctx.font = '10px monospace';
+        ctx.fillText('--- TIPS ---', W / 2, H * 0.58);
+        ctx.fillStyle = '#8899bb';
+        ctx.font = '9px monospace';
+        const tipSeed = (score * 7 + currentRound * 13) % TIPS.length;
+        for (let ti = 0; ti < 3; ti++) {
+          const tip = TIPS[(tipSeed + ti) % TIPS.length];
+          ctx.fillText(tip, W / 2, H * 0.63 + ti * 0.05 * H);
+        }
+      }
+      ctx.globalAlpha = 1;
 
-      ctx.fillStyle = '#ffcc44';
-      ctx.font = '12px monospace';
-      const blink = Math.sin(Date.now() * 0.004) > 0;
-      if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.85);
+      // Delayed prompt (2.5s)
+      if (stateTimer > 2.5) {
+        ctx.fillStyle = '#ffcc44';
+        ctx.font = '12px monospace';
+        const blink = Math.sin(Date.now() * 0.004) > 0;
+        if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.85);
+      }
     }
   }
 
   if (state === STATE.WIN) {
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
     ctx.fillRect(0, 0, W, H);
 
+    // Fireworks behind text
+    drawWinFireworks();
+
+    // Pulsing / bouncing title
+    const bounce = Math.sin(stateTimer * 3) * 4;
+    const pulse = 1 + Math.sin(stateTimer * 5) * 0.05;
+    ctx.save();
+    ctx.translate(W / 2, H * 0.22 + bounce);
+    ctx.scale(pulse, pulse);
+    // Title glow
+    ctx.shadowColor = '#ffcc44';
+    ctx.shadowBlur = 20 + Math.sin(stateTimer * 4) * 10;
     ctx.fillStyle = '#ffcc44';
-    ctx.font = 'bold 28px monospace';
-    ctx.fillText('MISSION COMPLETE!', W / 2, H * 0.3);
+    ctx.font = 'bold 26px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('MISSION COMPLETE!', 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.restore();
 
-    ctx.fillStyle = '#88aacc';
-    ctx.font = '13px monospace';
-    ctx.fillText('All 10 rounds cleared!', W / 2, H * 0.4);
+    // Sequential fade-in stats (each appears 0.5s after the last)
+    ctx.textAlign = 'center';
+    const line1 = clamp((stateTimer - 1.0) / 0.5, 0, 1);
+    const line2 = clamp((stateTimer - 1.5) / 0.5, 0, 1);
+    const line3 = clamp((stateTimer - 2.0) / 0.5, 0, 1);
+    const line4 = clamp((stateTimer - 2.5) / 0.5, 0, 1);
 
-    ctx.fillStyle = '#44ff88';
-    ctx.fillText(`Final Score: ${score}`, W / 2, H * 0.46);
-    ctx.fillStyle = '#88aacc';
-    ctx.font = '11px monospace';
-    ctx.fillText(`Enemies destroyed: ${enemiesKilled}`, W / 2, H * 0.51);
-    if (score > hiScore) {
-      ctx.fillStyle = '#ffcc44';
-      ctx.fillText('NEW HIGH SCORE!', W / 2, H * 0.56);
-    } else {
-      ctx.fillText(`Best: ${hiScore}`, W / 2, H * 0.56);
+    if (line1 > 0) {
+      ctx.globalAlpha = line1;
+      ctx.fillStyle = '#88aacc';
+      ctx.font = '13px monospace';
+      ctx.fillText('All 10 planets conquered!', W / 2, H * 0.33);
     }
+    if (line2 > 0) {
+      ctx.globalAlpha = line2;
+      ctx.fillStyle = '#44ff88';
+      ctx.font = '14px monospace';
+      ctx.fillText(`Final Score: ${score}`, W / 2, H * 0.40);
+    }
+    if (line3 > 0) {
+      ctx.globalAlpha = line3;
+      ctx.fillStyle = '#88aacc';
+      ctx.font = '11px monospace';
+      ctx.fillText(`Enemies destroyed: ${enemiesKilled}`, W / 2, H * 0.46);
+    }
+    if (line4 > 0) {
+      ctx.globalAlpha = line4;
+      if (score >= hiScore && score > 0) {
+        // Rainbow shimmer on high score
+        const rainbowHue = (Date.now() * 0.2) % 360;
+        ctx.fillStyle = hsl(rainbowHue, 90, 65);
+        ctx.font = 'bold 14px monospace';
+        ctx.shadowColor = hsl(rainbowHue, 90, 75);
+        ctx.shadowBlur = 12;
+        ctx.fillText('★ NEW HIGH SCORE! ★', W / 2, H * 0.53);
+        ctx.shadowBlur = 0;
+      } else {
+        ctx.fillStyle = '#88aacc';
+        ctx.font = '11px monospace';
+        ctx.fillText(`Best: ${hiScore}`, W / 2, H * 0.53);
+      }
+    }
+    ctx.globalAlpha = 1;
 
-    ctx.fillStyle = '#ffcc44';
-    ctx.font = '12px monospace';
-    const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.52);
+    // Prompt (delayed until 3.5s)
+    if (stateTimer > 3.5) {
+      ctx.fillStyle = '#ffcc44';
+      ctx.font = '12px monospace';
+      const blink = Math.sin(Date.now() * 0.004) > 0;
+      if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.62);
+    }
   }
 }
 
@@ -1995,6 +2416,26 @@ function sfxBombShot() {
   playTone(100, 0.08, 'square', 0.06);
 }
 
+function sfxFirework() {
+  if (!audioCtx) return;
+  playNoise(0.15, 0.06);
+  playTone(800 + Math.random() * 600, 0.12, 'sine', 0.05);
+}
+
+function sfxVictory() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  // Ascending fanfare: C-E-G-C-E (triumphant)
+  playToneAt(262, 0.2, 'triangle', 0.25, now);
+  playToneAt(330, 0.2, 'triangle', 0.25, now + 0.15);
+  playToneAt(392, 0.2, 'triangle', 0.25, now + 0.3);
+  playToneAt(523, 0.3, 'triangle', 0.3, now + 0.45);
+  playToneAt(659, 0.5, 'triangle', 0.3, now + 0.65);
+  // Harmonics
+  playToneAt(392, 0.4, 'sine', 0.12, now + 0.45);
+  playToneAt(523, 0.4, 'sine', 0.12, now + 0.65);
+}
+
 // ── Synthwave Music Loop ──
 let musicInterval = null;
 
@@ -2137,6 +2578,17 @@ function update(dt) {
   if (state === STATE.CRASHED || state === STATE.LANDED) {
     updateParticles(dt);
   }
+  if (state === STATE.LANDED) {
+    updateAstronaut(dt);
+  }
+  if (state === STATE.WIN) {
+    updateWinFireworks(dt);
+  }
+  if (state === STATE.CRASHED && lives <= 0) {
+    // Spawn embers for game over screen
+    if (Math.random() < 0.3) spawnEmber();
+    updateEmbers(dt);
+  }
 }
 
 function draw() {
@@ -2160,6 +2612,7 @@ function draw() {
     drawBullets();
     drawParticles();
     drawShip();
+    if (state === STATE.LANDED) drawAstronaut();
     ctx.restore();
     drawHUD();
   }
