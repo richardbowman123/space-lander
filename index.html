@@ -16,7 +16,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;touch-action:none;c
 'use strict';
 
 /* ========================================================
-   SPACE LANDER — Milestone 1: Core Flight & Terrain
+   SPACE LANDER — Milestone 2: Scrolling World
    ======================================================== */
 
 // ── Canvas Setup ──
@@ -60,17 +60,19 @@ function mulberry32(seed) {
 // ── Round Configuration (data-driven) ──
 // requiredKills: must kill this many enemies before landing is allowed
 // padAlien: if true, an alien patrols across the landing pad firing upward
+// worldWidth: total horizontal world size in pixels (screen = 480px)
+// padZone: 'center' = pad under spawn, 'screen' = pad on initial screen, 'anywhere' = pad hidden off-screen
 const ROUNDS = [
-  { round:1,  gravity:0.03, fuel:800, ammo:0,  padWidth:100,padPlacementRisk:0.0, terrainRoughness:0.08, terrainSeed:101, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
-  { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.25,terrainRoughness:0.15, terrainSeed:217, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false },
-  { round:3,  gravity:0.04, fuel:650, ammo:20, padWidth:80, padPlacementRisk:0.3, terrainRoughness:0.22, terrainSeed:318, enemyRate:0.7, enemyTypes:['turret'],          bombSpeed:2.0, blastRadius:25, requiredKills:0, padAlien:false },
-  { round:4,  gravity:0.04, fuel:600, ammo:25, padWidth:74, padPlacementRisk:0.35,terrainRoughness:0.28, terrainSeed:419, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:28, requiredKills:0, padAlien:false },
-  { round:5,  gravity:0.05, fuel:560, ammo:30, padWidth:68, padPlacementRisk:0.4, terrainRoughness:0.32, terrainSeed:520, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.4, blastRadius:30, requiredKills:0, padAlien:true  },
-  { round:6,  gravity:0.05, fuel:520, ammo:35, padWidth:62, padPlacementRisk:0.45,terrainRoughness:0.36, terrainSeed:621, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:32, requiredKills:1, padAlien:true  },
-  { round:7,  gravity:0.06, fuel:500, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:722, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:35, requiredKills:1, padAlien:true  },
-  { round:8,  gravity:0.06, fuel:480, ammo:35, padWidth:50, padPlacementRisk:0.45,terrainRoughness:0.44, terrainSeed:823, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.8, blastRadius:38, requiredKills:1, padAlien:true  },
-  { round:9,  gravity:0.07, fuel:460, ammo:40, padWidth:46, padPlacementRisk:0.35,terrainRoughness:0.48, terrainSeed:942, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:3.0, blastRadius:40, requiredKills:2, padAlien:true  },
-  { round:10, gravity:0.07, fuel:440, ammo:45, padWidth:42, padPlacementRisk:0.45,terrainRoughness:0.52, terrainSeed:1043,enemyRate:1.1, enemyTypes:['turret','alien'],  bombSpeed:3.2, blastRadius:42, requiredKills:2, padAlien:true  },
+  { round:1,  gravity:0.03, fuel:800, ammo:0,  padWidth:100,padPlacementRisk:0.0, terrainRoughness:0.08, terrainSeed:101, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false, worldWidth:1440, padZone:'center'   },
+  { round:2,  gravity:0.035,fuel:700, ammo:0,  padWidth:90, padPlacementRisk:0.25,terrainRoughness:0.15, terrainSeed:217, enemyRate:0,   enemyTypes:[],                  bombSpeed:0,   blastRadius:0,  requiredKills:0, padAlien:false, worldWidth:1440, padZone:'screen'   },
+  { round:3,  gravity:0.04, fuel:650, ammo:20, padWidth:80, padPlacementRisk:0.3, terrainRoughness:0.22, terrainSeed:318, enemyRate:0.7, enemyTypes:['turret'],          bombSpeed:2.0, blastRadius:25, requiredKills:0, padAlien:false, worldWidth:1680, padZone:'screen'   },
+  { round:4,  gravity:0.04, fuel:800, ammo:25, padWidth:74, padPlacementRisk:0.35,terrainRoughness:0.28, terrainSeed:419, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.2, blastRadius:28, requiredKills:0, padAlien:false, worldWidth:1920, padZone:'anywhere' },
+  { round:5,  gravity:0.05, fuel:850, ammo:30, padWidth:68, padPlacementRisk:0.4, terrainRoughness:0.32, terrainSeed:520, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.4, blastRadius:30, requiredKills:0, padAlien:true,  worldWidth:2160, padZone:'anywhere' },
+  { round:6,  gravity:0.05, fuel:900, ammo:35, padWidth:62, padPlacementRisk:0.45,terrainRoughness:0.36, terrainSeed:621, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:32, requiredKills:1, padAlien:true,  worldWidth:2400, padZone:'anywhere' },
+  { round:7,  gravity:0.06, fuel:950, ammo:35, padWidth:56, padPlacementRisk:0.45,terrainRoughness:0.40, terrainSeed:722, enemyRate:0.8, enemyTypes:['turret','alien'],  bombSpeed:2.6, blastRadius:35, requiredKills:1, padAlien:true,  worldWidth:2880, padZone:'anywhere' },
+  { round:8,  gravity:0.06, fuel:950, ammo:35, padWidth:50, padPlacementRisk:0.45,terrainRoughness:0.44, terrainSeed:823, enemyRate:0.9, enemyTypes:['turret','alien'],  bombSpeed:2.8, blastRadius:38, requiredKills:1, padAlien:true,  worldWidth:3120, padZone:'anywhere' },
+  { round:9,  gravity:0.07, fuel:1000,ammo:40, padWidth:46, padPlacementRisk:0.35,terrainRoughness:0.48, terrainSeed:942, enemyRate:1.0, enemyTypes:['turret','alien'],  bombSpeed:3.0, blastRadius:40, requiredKills:2, padAlien:true,  worldWidth:3360, padZone:'anywhere' },
+  { round:10, gravity:0.07, fuel:1000,ammo:45, padWidth:42, padPlacementRisk:0.45,terrainRoughness:0.52, terrainSeed:1043,enemyRate:1.1, enemyTypes:['turret','alien'],  bombSpeed:3.2, blastRadius:42, requiredKills:2, padAlien:true,  worldWidth:3360, padZone:'anywhere' },
 ];
 
 // ── Tips (shown on game over screen) ──
@@ -87,6 +89,8 @@ const TIPS = [
   'You gain an extra life for each successful landing',
   'Bullets fire downward — hover above enemies to hit them',
   'Use short taps, not long holds, for precise control',
+  'Check the radar — the green dot is the landing pad',
+  'In later rounds the pad is hidden, explore to find it',
 ];
 
 // ── Landing Thresholds (constant across rounds) ──
@@ -97,8 +101,15 @@ const MAX_LAND_VX = 1.2;    // max horizontal speed (lenient)
 const WORLD_TOP = 0;
 const HUD_HEIGHT = 150;
 const WORLD_BOTTOM = H - HUD_HEIGHT;  // terrain lives in top 570px
-const TERRAIN_POINTS = 120;           // number of terrain segments
+let terrainPointCount = 120;          // recalculated per round based on world width
 const SHIP_SIZE = 14;                 // half-size of ship
+
+// ── Scrolling World & Camera ──
+let worldWidth = 480;                 // current round's world width (set per round)
+let cameraX = 0;                      // current camera horizontal offset
+let cameraTargetX = 0;               // where camera wants to be
+const CAMERA_SMOOTH = 0.08;          // smoothing factor (lower = more lag)
+const WORLD_EDGE_MARGIN = 2;         // wall collision margin at world edges
 
 // ── Game State ──
 const STATE = { TITLE: 0, PLAYING: 1, LANDED: 2, CRASHED: 3, WIN: 4, ROUND_INTRO: 5 };
@@ -117,7 +128,7 @@ let hiScore = parseInt(localStorage.getItem('spaceLanderHi') || '0', 10);
 let ship = {};
 function resetShip() {
   ship = {
-    x: W / 2,
+    x: worldWidth / 2,
     y: 60,
     vx: 0,
     vy: 0,
@@ -141,7 +152,9 @@ let padLeft = 0, padRight = 0; // x coords of landing pad edges
 function generateTerrain(roundCfg) {
   const rng = mulberry32(roundCfg.terrainSeed);
   const rough = roundCfg.terrainRoughness;
-  const n = TERRAIN_POINTS;
+  const ww = worldWidth;
+  const n = Math.floor(ww / 4); // ~1 point per 4px, scales with world width
+  terrainPointCount = n;
   terrainX = [];
   terrainY = [];
 
@@ -172,28 +185,52 @@ function generateTerrain(roundCfg) {
     if (heights[i] === undefined) heights[i] = baseY;
   }
 
-  // Place landing pad — choose a location based on risk
-  // Lower risk = flatter, more central area; higher risk = steeper, more edge area
+  // Place landing pad based on padZone:
+  // 'center'  = directly under spawn (worldWidth/2)
+  // 'screen'  = within initial screen view but offset from center
+  // 'anywhere' = anywhere in the world (hidden, must explore)
   const padW = roundCfg.padWidth;
-  const segW = W / n;
+  const segW = ww / n;
+  const spawnX = ww / 2; // ship spawn position
+  const spawnScreenLeft = spawnX - W / 2;
+  const spawnScreenRight = spawnX + W / 2;
 
-  // Find suitable flat-ish spots and rank them by difficulty
-  // After round 1, exclude center zone so player must fly sideways
-  const centerZone = roundCfg.round > 1 ? 0.15 : 0; // exclude 15% around center
-  const wallBuffer = 8; // keep pad away from screen edges (in segments)
+  const wallBuffer = 8; // keep pad away from world edges (in segments)
   const candidates = [];
   for (let i = wallBuffer; i < n - wallBuffer; i++) {
-    const slope = Math.abs(heights[i + 1] - heights[i - 1]) / (2 * segW);
-    const centerDist = Math.abs(i - n / 2) / (n / 2); // 0=center, 1=edge
-    // Skip center zone after round 1
-    if (centerDist < centerZone) continue;
-    // Skip positions too close to walls (extra safety for later rounds)
+    const slope = Math.abs(heights[Math.min(i+1, n)] - heights[Math.max(i-1, 0)]) / (2 * segW);
     const xPos = i * segW;
-    if (xPos < padW + 15 || xPos > W - padW - 15) continue;
+
+    // Skip positions too close to world edge walls
+    if (xPos < padW + 15 || xPos > ww - padW - 15) continue;
+
+    // Filter by padZone
+    if (roundCfg.padZone === 'center') {
+      // Must be very close to spawn center
+      if (Math.abs(xPos - spawnX) > 40) continue;
+    } else if (roundCfg.padZone === 'screen') {
+      // Must be within the initial screen view, but not dead center
+      if (xPos < spawnScreenLeft + 40 || xPos > spawnScreenRight - 40) continue;
+      if (Math.abs(xPos - spawnX) < 60) continue; // not directly under spawn
+    } else { // 'anywhere'
+      // Must be OFF the initial screen (hidden)
+      if (xPos >= spawnScreenLeft - 20 && xPos <= spawnScreenRight + 20) continue;
+    }
+
+    const centerDist = Math.abs(i - n / 2) / (n / 2); // 0=center, 1=edge
     const difficulty = slope * 0.6 + centerDist * 0.4;
     candidates.push({ i, difficulty });
   }
   candidates.sort((a, b) => a.difficulty - b.difficulty);
+
+  // Fallback: if no candidates found for the zone, relax to any valid spot
+  if (candidates.length === 0) {
+    for (let i = wallBuffer; i < n - wallBuffer; i++) {
+      const xPos = i * segW;
+      if (xPos < padW + 15 || xPos > ww - padW - 15) continue;
+      candidates.push({ i, difficulty: 0 });
+    }
+  }
 
   // Pick candidate based on padPlacementRisk (0=easiest, 1=hardest)
   const pickIdx = Math.floor(roundCfg.padPlacementRisk * (candidates.length - 1) * 0.8);
@@ -223,8 +260,8 @@ function generateTerrain(roundCfg) {
 // Get terrain height at any x via linear interpolation
 function getTerrainY(x) {
   if (x <= 0) return terrainY[0];
-  if (x >= W) return terrainY[terrainY.length - 1];
-  const segW = W / TERRAIN_POINTS;
+  if (x >= worldWidth) return terrainY[terrainY.length - 1];
+  const segW = worldWidth / terrainPointCount;
   const i = x / segW;
   const lo = Math.floor(i);
   const hi = Math.min(lo + 1, terrainY.length - 1);
@@ -236,9 +273,13 @@ function getTerrainY(x) {
 let stars = [];
 function generateStars() {
   stars = [];
-  for (let i = 0; i < 80; i++) {
+  // Stars cover the parallax visible range: at 0.3x scroll,
+  // max visible x = W + (worldWidth - W) * 0.3
+  const starFieldWidth = W + (worldWidth - W) * 0.3;
+  const starCount = Math.floor(80 * (starFieldWidth / W));
+  for (let i = 0; i < starCount; i++) {
     stars.push({
-      x: Math.random() * W,
+      x: Math.random() * starFieldWidth,
       y: Math.random() * WORLD_BOTTOM,
       size: Math.random() * 1.5 + 0.5,
       bright: Math.random() * 0.5 + 0.5,
@@ -354,6 +395,19 @@ function updateShake(dt) {
   }
 }
 
+// ── Camera ──
+function updateCamera() {
+  if (ship.x === undefined) return; // not initialized yet (title screen)
+  // Camera target: center ship horizontally
+  cameraTargetX = ship.x - W / 2;
+  // Clamp so camera doesn't show beyond world edges
+  cameraTargetX = clamp(cameraTargetX, 0, Math.max(0, worldWidth - W));
+  // Smooth follow (soft lag)
+  cameraX += (cameraTargetX - cameraX) * CAMERA_SMOOTH;
+  // Snap if very close (avoid sub-pixel jitter)
+  if (Math.abs(cameraX - cameraTargetX) < 0.5) cameraX = cameraTargetX;
+}
+
 // ── Particles (simple pool) ──
 const MAX_PARTICLES = 300;
 const particles = [];
@@ -446,7 +500,7 @@ function updateBullets(dt) {
     b.life -= dt;
 
     // Off-screen or expired
-    if (b.life <= 0 || b.x < -10 || b.x > W + 10 || b.y < -10 || b.y > H + 10) {
+    if (b.life <= 0 || b.x < -10 || b.x > worldWidth + 10 || b.y < -10 || b.y > H + 10) {
       b.active = false;
       continue;
     }
@@ -569,7 +623,7 @@ function spawnEnemy(type) {
         // Place on terrain, avoiding the landing pad
         let ex;
         do {
-          ex = 30 + Math.random() * (W - 60);
+          ex = 30 + Math.random() * (worldWidth - 60);
         } while (ex > padLeft - 30 && ex < padRight + 30);
         e.x = ex;
         e.y = getTerrainY(ex);
@@ -578,7 +632,7 @@ function spawnEnemy(type) {
         e.maxHp = e.hp;
         e.fireTimer = 1.5 + Math.random() * 2;
       } else { // alien
-        e.x = Math.random() < 0.5 ? -10 : W + 10;
+        e.x = Math.random() < 0.5 ? -10 : worldWidth + 10;
         e.y = 60 + Math.random() * (WORLD_BOTTOM * 0.4);
         e.vx = e.x < 0 ? 0.8 : -0.8;
         e.vy = 0;
@@ -734,7 +788,7 @@ function updateEnemies(dt) {
       }
       // Keep on screen
       if (e.x < 10) { e.x = 10; e.vx = Math.abs(e.vx); }
-      if (e.x > W - 10) { e.x = W - 10; e.vx = -Math.abs(e.vx); }
+      if (e.x > worldWidth - 10) { e.x = worldWidth - 10; e.vx = -Math.abs(e.vx); }
 
       e.fireTimer -= dt;
       if (e.fireTimer <= 0) {
@@ -756,7 +810,7 @@ function updateBombs(dt) {
     b.vy += 0.02 * dt * 60; // slight gravity on bombs
     b.life -= dt;
 
-    if (b.life <= 0 || b.x < -20 || b.x > W + 20 || b.y < -20) {
+    if (b.life <= 0 || b.x < -20 || b.x > worldWidth + 20 || b.y < -20) {
       b.active = false;
       continue;
     }
@@ -941,6 +995,8 @@ function startGame() {
 
 function startRound() {
   const cfg = ROUNDS[currentRound];
+  // Set world width for this round
+  worldWidth = cfg.worldWidth || W;
   terrainX = []; terrainY = [];
   generateTerrain(cfg);
   resetShip();
@@ -948,6 +1004,11 @@ function startRound() {
   clearBullets();
   clearEnemies();
   roundKills = 0;
+  // Snap camera to ship position (no smooth lag on round start)
+  cameraX = clamp(ship.x - W / 2, 0, worldWidth - W);
+  cameraTargetX = cameraX;
+  // Regenerate stars for new world size
+  generateStars();
   // Spawn pad alien if configured
   if (cfg.padAlien) {
     spawnPadAlien();
@@ -1047,8 +1108,8 @@ function updatePlaying(dt) {
   ship.x += ship.vx * dt * 60;
   ship.y += ship.vy * dt * 60;
 
-  // Wall collision (no wrapping — hit the edge = crash)
-  if (ship.x - SHIP_SIZE < 2 || ship.x + SHIP_SIZE > W - 2) {
+  // Wall collision at world edges (red crash-walls)
+  if (ship.x - SHIP_SIZE < WORLD_EDGE_MARGIN || ship.x + SHIP_SIZE > worldWidth - WORLD_EDGE_MARGIN) {
     crashShip();
     return;
   }
@@ -1160,28 +1221,36 @@ function drawStars() {
 }
 
 function drawTerrain() {
-  // Wall borders (thin lines on left and right edges)
+  // Visible range (for optimized drawing)
+  const visLeft = cameraX - 20;
+  const visRight = cameraX + W + 20;
+  const segW = worldWidth / terrainPointCount;
+
+  // Wall borders at world edges (red crash-walls)
   ctx.strokeStyle = '#ff4444';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(1, 0); ctx.lineTo(1, WORLD_BOTTOM);
-  ctx.moveTo(W - 1, 0); ctx.lineTo(W - 1, WORLD_BOTTOM);
+  ctx.moveTo(worldWidth - 1, 0); ctx.lineTo(worldWidth - 1, WORLD_BOTTOM);
   ctx.stroke();
   // Subtle glow
   ctx.strokeStyle = 'rgba(255,68,68,0.2)';
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(2, 0); ctx.lineTo(2, WORLD_BOTTOM);
-  ctx.moveTo(W - 2, 0); ctx.lineTo(W - 2, WORLD_BOTTOM);
+  ctx.moveTo(worldWidth - 2, 0); ctx.lineTo(worldWidth - 2, WORLD_BOTTOM);
   ctx.stroke();
 
-  // Fill terrain
+  // Fill terrain (only visible segments for performance)
+  const startI = Math.max(0, Math.floor(visLeft / segW) - 1);
+  const endI = Math.min(terrainX.length - 1, Math.ceil(visRight / segW) + 1);
+
   ctx.beginPath();
-  ctx.moveTo(0, H);
-  for (let i = 0; i < terrainX.length; i++) {
+  ctx.moveTo(terrainX[startI], H);
+  for (let i = startI; i <= endI; i++) {
     ctx.lineTo(terrainX[i], terrainY[i]);
   }
-  ctx.lineTo(W, H);
+  ctx.lineTo(terrainX[endI], H);
   ctx.closePath();
 
   // Gradient fill
@@ -1192,10 +1261,10 @@ function drawTerrain() {
   ctx.fillStyle = grad;
   ctx.fill();
 
-  // Terrain outline
+  // Terrain outline (visible segments only)
   ctx.beginPath();
-  for (let i = 0; i < terrainX.length; i++) {
-    if (i === 0) ctx.moveTo(terrainX[i], terrainY[i]);
+  for (let i = startI; i <= endI; i++) {
+    if (i === startI) ctx.moveTo(terrainX[i], terrainY[i]);
     else ctx.lineTo(terrainX[i], terrainY[i]);
   }
   ctx.strokeStyle = '#886644';
@@ -1488,12 +1557,14 @@ function drawRadar(rx, ry, rw, rh) {
   ctx.moveTo(rx, ry + rh / 2); ctx.lineTo(rx + rw, ry + rh / 2);
   ctx.stroke();
 
-  // Terrain mini
+  // Terrain mini (mapped to full worldWidth)
   ctx.strokeStyle = '#2a5a2a';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  for (let i = 0; i < terrainX.length; i += 3) {
-    const mx = rx + (terrainX[i] / W) * rw;
+  // Skip more points for wider worlds to keep radar clean
+  const skip = Math.max(3, Math.floor(terrainX.length / 120));
+  for (let i = 0; i < terrainX.length; i += skip) {
+    const mx = rx + (terrainX[i] / worldWidth) * rw;
     const my = ry + (terrainY[i] / WORLD_BOTTOM) * rh;
     if (i === 0) ctx.moveTo(mx, my);
     else ctx.lineTo(mx, my);
@@ -1501,16 +1572,23 @@ function drawRadar(rx, ry, rw, rh) {
   ctx.stroke();
 
   // Landing pad
-  const padMX = rx + ((padLeft + padRight) / 2 / W) * rw;
+  const padMX = rx + ((padLeft + padRight) / 2 / worldWidth) * rw;
   const padMY = ry + (getTerrainY((padLeft + padRight) / 2) / WORLD_BOTTOM) * rh;
   ctx.fillStyle = '#00ff88';
   ctx.fillRect(padMX - 2, padMY - 1, 4, 2);
+
+  // Viewport indicator (shows current camera view)
+  const vpLeft = rx + (cameraX / worldWidth) * rw;
+  const vpWidth = Math.max(2, (W / worldWidth) * rw);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(vpLeft, ry, vpWidth, rh);
 
   // Enemy dots
   for (let i = 0; i < MAX_ENEMIES; i++) {
     const e = enemies[i];
     if (!e.active || e.state === 'dying') continue;
-    const emx = rx + (e.x / W) * rw;
+    const emx = rx + (e.x / worldWidth) * rw;
     const emy = ry + (e.y / WORLD_BOTTOM) * rh;
     ctx.fillStyle = e.state === 'telegraph' ? '#44ff44' : '#ff4444';
     ctx.fillRect(emx - 1, emy - 1, 2, 2);
@@ -1520,14 +1598,14 @@ function drawRadar(rx, ry, rw, rh) {
   for (let i = 0; i < MAX_BOMBS; i++) {
     const b = bombs[i];
     if (!b.active) continue;
-    const bmx = rx + (b.x / W) * rw;
+    const bmx = rx + (b.x / worldWidth) * rw;
     const bmy = ry + (b.y / WORLD_BOTTOM) * rh;
     ctx.fillStyle = '#ff8800';
     ctx.fillRect(bmx, bmy, 1, 1);
   }
 
   // Ship dot
-  const sx = rx + (ship.x / W) * rw;
+  const sx = rx + (ship.x / worldWidth) * rw;
   const sy = ry + (ship.y / WORLD_BOTTOM) * rh;
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(sx - 1, sy - 1, 3, 3);
@@ -1562,19 +1640,20 @@ function drawOverlay() {
       ctx.fillText('Both or Up: Boost upward', W / 2, H * 0.42);
       ctx.fillText('Space: Fire weapons downward', W / 2, H * 0.46);
     }
-    ctx.fillText('Land safely on the green pad!', W / 2, H * 0.50);
-    if (!isMobile) ctx.fillText('M: Mute/Unmute', W / 2, H * 0.54);
+    ctx.fillText('Find and land on the green pad!', W / 2, H * 0.50);
+    ctx.fillText('Use the radar to navigate', W / 2, H * 0.54);
+    if (!isMobile) ctx.fillText('M: Mute/Unmute', W / 2, H * 0.58);
 
     if (hiScore > 0) {
       ctx.fillStyle = '#ffcc44';
       ctx.font = '11px monospace';
-      ctx.fillText(`High Score: ${hiScore}`, W / 2, H * 0.58);
+      ctx.fillText(`High Score: ${hiScore}`, W / 2, H * 0.63);
     }
 
     ctx.fillStyle = '#ffcc44';
     ctx.font = '14px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText(isMobile ? 'TAP TO START' : 'PRESS ENTER TO START', W / 2, H * 0.66);
+    if (blink) ctx.fillText(isMobile ? 'TAP TO START' : 'PRESS ENTER TO START', W / 2, H * 0.70);
   }
 
   if (state === STATE.ROUND_INTRO) {
@@ -2002,6 +2081,7 @@ function gameLoop(timestamp) {
 function update(dt) {
   stateTimer += dt;
   updateShake(dt);
+  updateCamera();
 
   if (state === STATE.PLAYING) {
     updatePlaying(dt);
@@ -2017,9 +2097,15 @@ function draw() {
   ctx.fillRect(0, 0, W, H);
 
   if (state !== STATE.TITLE && state !== STATE.WIN) {
+    // Parallax star layer (slower scroll for depth)
     ctx.save();
-    ctx.translate(shakeX, shakeY);
+    ctx.translate(shakeX - cameraX * 0.3, shakeY);
     drawStars();
+    ctx.restore();
+
+    // World layer (full camera offset)
+    ctx.save();
+    ctx.translate(shakeX - cameraX, shakeY);
     drawTerrain();
     drawEnemies();
     drawBombs();
