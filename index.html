@@ -12,6 +12,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;touch-action:none;c
 </head>
 <body>
 <canvas id="gc"></canvas>
+<input id="nameInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off"
+       style="position:absolute;left:-9999px;top:0;opacity:0;width:1px;height:1px;" maxlength="12">
 <script>
 'use strict';
 
@@ -122,7 +124,7 @@ const CAMERA_EDGE_SMOOTH = 0.12;    // how fast camera catches up when outside d
 const WORLD_EDGE_MARGIN = 2;         // wall collision margin at world edges
 
 // ── Game State ──
-const STATE = { TITLE: 0, PLAYING: 1, LANDED: 2, CRASHED: 3, WIN: 4, ROUND_INTRO: 5 };
+const STATE = { TITLE: 0, PLAYING: 1, LANDED: 2, CRASHED: 3, WIN: 4, ROUND_INTRO: 5, NAME_ENTRY: 6, LEADERBOARD: 7 };
 let state = STATE.TITLE;
 let currentRound = 0; // 0-indexed into ROUNDS
 let stateTimer = 0;
@@ -133,6 +135,20 @@ let roundKills = 0;      // kills this round (for required-kill check)
 let lives = 3;
 const MAX_LIVES = 6;
 let hiScore = parseInt(localStorage.getItem('spaceLanderHi') || '0', 10);
+
+// ── Firebase Leaderboard ──
+const FIREBASE_DB_URL = ''; // Paste your Firebase Realtime Database URL here
+const MAX_NAME_LENGTH = 12;
+const LEADERBOARD_SIZE = 10;
+let entryName = localStorage.getItem('spaceLanderName') || '';
+let nameSubmitting = false;
+let nameSubmitError = false;
+let leaderboardData = null;
+let leaderboardLastFetch = 0;
+let leaderboardHighlightName = '';
+let leaderboardHighlightScore = 0;
+let leaderboardViewOnly = false;
+const hiddenInput = document.getElementById('nameInput');
 
 // ── Ship State ──
 let ship = {};
@@ -324,6 +340,13 @@ function handleKeyAction(code, down) {
     startGame();
     startMusic();
   }
+  if (state === STATE.TITLE && code === 'KeyL') {
+    leaderboardViewOnly = true;
+    leaderboardHighlightName = '';
+    leaderboardHighlightScore = 0;
+    fetchLeaderboard().then(() => { state = STATE.LEADERBOARD; stateTimer = 0; });
+    return;
+  }
   if (state === STATE.ROUND_INTRO && (code === 'Space' || code === 'Enter')) {
     state = STATE.PLAYING;
   }
@@ -333,11 +356,38 @@ function handleKeyAction(code, down) {
   }
   if ((state === STATE.CRASHED) && (code === 'Space' || code === 'Enter')) {
     if (lives <= 0 && stateTimer < 2.5) return; // wait for game over animation
+    if (lives <= 0) { enterNameEntryState(); return; }
     restartRound();
   }
   if (state === STATE.WIN && (code === 'Space' || code === 'Enter')) {
     if (stateTimer < 3.5) return; // wait for celebration
-    state = STATE.TITLE;
+    enterNameEntryState();
+  }
+  // Name entry keyboard input
+  if (state === STATE.NAME_ENTRY && !nameSubmitting) {
+    if (code === 'Enter') { submitNameAndScore(); return; }
+    if (code === 'Backspace') { entryName = entryName.slice(0, -1); hiddenInput.value = entryName; return; }
+    if (code === 'Escape') { state = STATE.TITLE; return; }
+    if (code.startsWith('Key') && entryName.length < MAX_NAME_LENGTH) {
+      entryName += code.charAt(3);
+      hiddenInput.value = entryName;
+      return;
+    }
+    if (code.startsWith('Digit') && entryName.length < MAX_NAME_LENGTH) {
+      entryName += code.charAt(5);
+      hiddenInput.value = entryName;
+      return;
+    }
+    if (code === 'Space' && entryName.length < MAX_NAME_LENGTH) {
+      entryName += ' ';
+      hiddenInput.value = entryName;
+      return;
+    }
+  }
+  // Leaderboard
+  if (state === STATE.LEADERBOARD && (code === 'Space' || code === 'Enter')) {
+    state = STATE.TITLE; stateTimer = 0;
+    return;
   }
   // Fire
   if (state === STATE.PLAYING && code === 'Space') {
@@ -387,13 +437,47 @@ function handleTouchEvent(e) {
 
   // Tap to advance state
   if (e.type === 'touchstart') {
-    if (state === STATE.TITLE) { startGame(); startMusic(); return; }
+    if (state === STATE.TITLE) {
+      // Check if tap is in the leaderboard zone (roughly H * 0.64 to 0.70)
+      const tr2 = canvas.getBoundingClientRect();
+      const tty2 = (e.touches[0].clientY - tr2.top) / tr2.height;
+      if (tty2 > 0.64 && tty2 < 0.71) {
+        leaderboardViewOnly = true;
+        leaderboardHighlightName = '';
+        leaderboardHighlightScore = 0;
+        fetchLeaderboard().then(() => { state = STATE.LEADERBOARD; stateTimer = 0; });
+        return;
+      }
+      startGame(); startMusic(); return;
+    }
     if (state === STATE.ROUND_INTRO) { state = STATE.PLAYING; return; }
     if (state === STATE.LANDED) { if (astro.phase < 4) return; nextRound(); return; }
-    if (state === STATE.CRASHED) { if (lives <= 0 && stateTimer < 2.5) return; restartRound(); return; }
-    if (state === STATE.WIN) { if (stateTimer < 3.5) return; state = STATE.TITLE; return; }
+    if (state === STATE.CRASHED) {
+      if (lives <= 0 && stateTimer < 2.5) return;
+      if (lives <= 0) { enterNameEntryState(); return; }
+      restartRound(); return;
+    }
+    if (state === STATE.WIN) { if (stateTimer < 3.5) return; enterNameEntryState(); return; }
+    if (state === STATE.NAME_ENTRY && !nameSubmitting) {
+      // Check if tap is on SUBMIT button area (bottom of screen)
+      const tr = canvas.getBoundingClientRect();
+      const tty = (e.touches[0].clientY - tr.top) / tr.height;
+      if (tty > 0.76 && tty < 0.88) { submitNameAndScore(); }
+      else { hiddenInput.focus(); }
+      return;
+    }
+    if (state === STATE.LEADERBOARD) { state = STATE.TITLE; stateTimer = 0; return; }
   }
 }
+
+// Hidden input listener for mobile keyboard
+hiddenInput.addEventListener('input', () => {
+  if (state !== STATE.NAME_ENTRY || nameSubmitting) return;
+  let val = hiddenInput.value.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+  if (val.length > MAX_NAME_LENGTH) val = val.slice(0, MAX_NAME_LENGTH);
+  entryName = val;
+  hiddenInput.value = entryName;
+});
 
 // ── Screen Shake ──
 let shakeX = 0, shakeY = 0, shakeMag = 0;
@@ -1128,6 +1212,77 @@ function restartRound() {
     return;
   }
   startRound();
+}
+
+// ── Leaderboard & Name Entry ──
+function enterNameEntryState() {
+  state = STATE.NAME_ENTRY;
+  stateTimer = 0;
+  nameSubmitting = false;
+  nameSubmitError = false;
+  entryName = localStorage.getItem('spaceLanderName') || '';
+  hiddenInput.value = entryName;
+  setTimeout(() => hiddenInput.focus(), 100);
+}
+
+async function fetchLeaderboard() {
+  if (leaderboardData && (Date.now() - leaderboardLastFetch < 30000)) return;
+  if (!FIREBASE_DB_URL) { leaderboardData = []; return; }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const url = `${FIREBASE_DB_URL}/scores.json?orderBy="score"&limitToLast=${LEADERBOARD_SIZE}`;
+    const resp = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data) { leaderboardData = []; return; }
+    leaderboardData = Object.values(data).sort((a, b) => b.score - a.score);
+    leaderboardLastFetch = Date.now();
+  } catch (err) {
+    console.warn('Leaderboard fetch failed:', err);
+    if (!leaderboardData) leaderboardData = [];
+  }
+}
+
+async function submitScore(name, scoreVal, round, kills) {
+  if (!FIREBASE_DB_URL) return false;
+  const entry = { name: name, score: scoreVal, round: round + 1, kills: kills, date: new Date().toISOString() };
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const resp = await fetch(`${FIREBASE_DB_URL}/scores.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    leaderboardLastFetch = 0; // invalidate cache
+    return true;
+  } catch (err) {
+    console.warn('Score submit failed:', err);
+    return false;
+  }
+}
+
+async function submitNameAndScore() {
+  entryName = entryName.trim().toUpperCase();
+  if (entryName.length === 0) entryName = 'PILOT';
+  localStorage.setItem('spaceLanderName', entryName);
+  nameSubmitting = true;
+  nameSubmitError = false;
+  const success = await submitScore(entryName, score, currentRound, enemiesKilled);
+  if (!success) nameSubmitError = true;
+  leaderboardHighlightName = entryName;
+  leaderboardHighlightScore = score;
+  leaderboardViewOnly = false;
+  leaderboardLastFetch = 0;
+  await fetchLeaderboard();
+  nameSubmitting = false;
+  state = STATE.LEADERBOARD;
+  stateTimer = 0;
 }
 
 // ── Physics Update ──
@@ -1999,13 +2154,24 @@ function drawOverlay() {
     if (hiScore > 0) {
       ctx.fillStyle = '#ffcc44';
       ctx.font = '11px monospace';
-      ctx.fillText(`High Score: ${hiScore}`, W / 2, H * 0.63);
+      ctx.fillText(`High Score: ${hiScore}`, W / 2, H * 0.62);
+    }
+
+    // Leaderboard option
+    if (!isMobile) {
+      ctx.fillStyle = '#667799';
+      ctx.font = '10px monospace';
+      ctx.fillText('L: VIEW LEADERBOARD', W / 2, H * 0.67);
+    } else {
+      ctx.fillStyle = '#667799';
+      ctx.font = '10px monospace';
+      ctx.fillText('TAP BELOW FOR LEADERBOARD', W / 2, H * 0.67);
     }
 
     ctx.fillStyle = '#ffcc44';
     ctx.font = '14px monospace';
     const blink = Math.sin(Date.now() * 0.004) > 0;
-    if (blink) ctx.fillText(isMobile ? 'TAP TO START' : 'PRESS ENTER TO START', W / 2, H * 0.70);
+    if (blink) ctx.fillText(isMobile ? 'TAP TO START' : 'PRESS ENTER TO START', W / 2, H * 0.73);
   }
 
   if (state === STATE.ROUND_INTRO) {
@@ -2259,6 +2425,194 @@ function drawOverlay() {
       const blink = Math.sin(Date.now() * 0.004) > 0;
       if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.62);
     }
+  }
+
+  // ── NAME ENTRY ──
+  if (state === STATE.NAME_ENTRY) {
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+
+    // Title
+    ctx.fillStyle = '#44ccff';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('ENTER YOUR NAME', W / 2, H * 0.22);
+
+    // Score reminder
+    ctx.fillStyle = '#88aacc';
+    ctx.font = '12px monospace';
+    ctx.fillText(`Score: ${score}`, W / 2, H * 0.30);
+
+    // Input box
+    const boxW = 260, boxH = 44;
+    const boxX = (W - boxW) / 2, boxY = H * 0.37;
+    ctx.fillStyle = '#0c1420';
+    ctx.fillRect(boxX, boxY, boxW, boxH);
+    ctx.strokeStyle = '#44ccff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+    // Name text + cursor
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px monospace';
+    const cursorBlink = Math.sin(Date.now() * 0.006) > 0;
+    const cursor = (cursorBlink && !nameSubmitting) ? '_' : '';
+    ctx.fillText(entryName + cursor, W / 2, boxY + 30);
+
+    // Character count
+    ctx.fillStyle = '#556677';
+    ctx.font = '9px monospace';
+    ctx.fillText(`${entryName.length}/${MAX_NAME_LENGTH}`, W / 2, boxY + boxH + 14);
+
+    // Instructions
+    ctx.fillStyle = '#88aacc';
+    ctx.font = '10px monospace';
+    if (isMobile) {
+      ctx.fillText('TAP TO OPEN KEYBOARD', W / 2, H * 0.58);
+    } else {
+      ctx.fillText('TYPE YOUR NAME, THEN PRESS ENTER', W / 2, H * 0.58);
+    }
+    if (!isMobile) {
+      ctx.fillStyle = '#445566';
+      ctx.font = '9px monospace';
+      ctx.fillText('ESC TO SKIP', W / 2, H * 0.63);
+    }
+
+    // Submitting state
+    if (nameSubmitting) {
+      ctx.fillStyle = '#ffcc44';
+      ctx.font = '12px monospace';
+      const dots = '.'.repeat(Math.floor(stateTimer * 3) % 4);
+      ctx.fillText('SUBMITTING' + dots, W / 2, H * 0.72);
+    }
+
+    // Mobile submit button
+    if (isMobile && !nameSubmitting) {
+      const btnW = 160, btnH = 40;
+      const btnX = (W - btnW) / 2, btnY = H * 0.78;
+      ctx.fillStyle = '#1a3322';
+      ctx.fillRect(btnX, btnY, btnW, btnH);
+      ctx.strokeStyle = '#44ff88';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(btnX, btnY, btnW, btnH);
+      ctx.fillStyle = '#44ff88';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('SUBMIT', W / 2, btnY + 27);
+    }
+  }
+
+  // ── LEADERBOARD ──
+  if (state === STATE.LEADERBOARD) {
+    ctx.fillStyle = 'rgba(0,0,0,0.92)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+
+    // Title
+    ctx.fillStyle = '#ffcc44';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('LEADERBOARD', W / 2, H * 0.08);
+
+    // Decorative line
+    ctx.strokeStyle = '#335577';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.12, H * 0.105);
+    ctx.lineTo(W * 0.88, H * 0.105);
+    ctx.stroke();
+
+    if (!leaderboardData || leaderboardData.length === 0) {
+      ctx.fillStyle = '#667799';
+      ctx.font = '13px monospace';
+      if (nameSubmitError) {
+        ctx.fillText('COULD NOT CONNECT', W / 2, H * 0.38);
+        ctx.fillStyle = '#88aacc';
+        ctx.font = '11px monospace';
+        ctx.fillText('Score saved locally', W / 2, H * 0.44);
+      } else if (!FIREBASE_DB_URL) {
+        ctx.fillText('LEADERBOARD NOT CONFIGURED', W / 2, H * 0.38);
+        ctx.fillStyle = '#88aacc';
+        ctx.font = '10px monospace';
+        ctx.fillText('Set FIREBASE_DB_URL to enable', W / 2, H * 0.44);
+      } else {
+        ctx.fillText('NO SCORES YET', W / 2, H * 0.38);
+        ctx.fillStyle = '#88aacc';
+        ctx.font = '11px monospace';
+        ctx.fillText('Be the first!', W / 2, H * 0.44);
+      }
+    } else {
+      // Column headers
+      const startY = H * 0.14;
+      const rowH = Math.min(30, (H * 0.72) / LEADERBOARD_SIZE);
+      ctx.fillStyle = '#556677';
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('#', 36, startY);
+      ctx.fillText('NAME', 70, startY);
+      ctx.fillText('SCORE', 280, startY);
+      ctx.fillText('RND', 380, startY);
+
+      // Rows
+      for (let i = 0; i < leaderboardData.length && i < LEADERBOARD_SIZE; i++) {
+        const entry = leaderboardData[i];
+        const y = startY + (i + 1) * rowH;
+        const rank = i + 1;
+        const isHl = !leaderboardViewOnly &&
+          entry.name === leaderboardHighlightName &&
+          entry.score === leaderboardHighlightScore;
+
+        // Highlight row
+        if (isHl) {
+          ctx.fillStyle = 'rgba(68, 204, 255, 0.10)';
+          ctx.fillRect(28, y - 14, W - 56, rowH - 2);
+        }
+
+        // Rank colour
+        if (rank === 1) ctx.fillStyle = '#ffcc44';
+        else if (rank === 2) ctx.fillStyle = '#cccccc';
+        else if (rank === 3) ctx.fillStyle = '#cc8844';
+        else ctx.fillStyle = isHl ? '#44ccff' : '#88aacc';
+        ctx.font = rank <= 3 ? 'bold 13px monospace' : '12px monospace';
+        ctx.textAlign = 'left';
+
+        // Rank
+        const rankStr = rank <= 3 ? ['1st', '2nd', '3rd'][rank - 1] : rank + '.';
+        ctx.fillText(rankStr, 36, y);
+
+        // Name
+        ctx.fillStyle = isHl ? '#ffffff' : (rank <= 3 ? '#eeeeff' : '#aabbcc');
+        const displayName = entry.name.length > 10 ? entry.name.slice(0, 10) + '..' : entry.name;
+        ctx.fillText(displayName, 70, y);
+
+        // Score
+        ctx.fillStyle = isHl ? '#44ff88' : (rank <= 3 ? '#44ff88' : '#88aacc');
+        ctx.fillText(String(entry.score), 280, y);
+
+        // Round
+        ctx.fillStyle = isHl ? '#44ccff' : '#667799';
+        ctx.font = '10px monospace';
+        ctx.fillText('R' + (entry.round || '?'), 380, y);
+      }
+    }
+
+    // Show player score if not in top 10
+    if (!leaderboardViewOnly && leaderboardData && leaderboardData.length > 0) {
+      const inTop = leaderboardData.some(e =>
+        e.name === leaderboardHighlightName && e.score === leaderboardHighlightScore
+      );
+      if (!inTop) {
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#44ccff';
+        ctx.font = '11px monospace';
+        ctx.fillText(`Your score: ${leaderboardHighlightScore} (${leaderboardHighlightName})`, W / 2, H * 0.88);
+      }
+    }
+
+    // Prompt
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffcc44';
+    ctx.font = '12px monospace';
+    const blink = Math.sin(Date.now() * 0.004) > 0;
+    if (blink) ctx.fillText(isMobile ? 'TAP TO CONTINUE' : 'PRESS ENTER', W / 2, H * 0.95);
   }
 }
 
@@ -2596,7 +2950,7 @@ function draw() {
   ctx.fillStyle = '#08080f';
   ctx.fillRect(0, 0, W, H);
 
-  if (state !== STATE.TITLE && state !== STATE.WIN) {
+  if (state !== STATE.TITLE && state !== STATE.WIN && state !== STATE.NAME_ENTRY && state !== STATE.LEADERBOARD) {
     // Parallax star layer (slower scroll for depth)
     ctx.save();
     ctx.translate(shakeX - cameraX * 0.3, shakeY);
