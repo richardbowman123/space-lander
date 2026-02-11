@@ -107,8 +107,8 @@ const SHIP_SIZE = 14;                 // half-size of ship
 // ── Scrolling World & Camera ──
 let worldWidth = 480;                 // current round's world width (set per round)
 let cameraX = 0;                      // current camera horizontal offset
-let cameraTargetX = 0;               // where camera wants to be
-const CAMERA_SMOOTH = 0.08;          // smoothing factor (lower = more lag)
+const DEAD_ZONE = 0.3;              // ship can move freely in central 60% (0.3 from each edge)
+const CAMERA_EDGE_SMOOTH = 0.12;    // how fast camera catches up when outside dead zone
 const WORLD_EDGE_MARGIN = 2;         // wall collision margin at world edges
 
 // ── Game State ──
@@ -398,14 +398,28 @@ function updateShake(dt) {
 // ── Camera ──
 function updateCamera() {
   if (ship.x === undefined) return; // not initialized yet (title screen)
-  // Camera target: center ship horizontally
-  cameraTargetX = ship.x - W / 2;
+
+  // Dead zone camera: ship moves freely in the central 60% of the screen.
+  // Camera only scrolls when the ship pushes past the dead zone edges.
+  const screenX = ship.x - cameraX; // ship position relative to screen
+  const leftEdge = W * DEAD_ZONE;   // ~144px from left
+  const rightEdge = W * (1 - DEAD_ZONE); // ~336px from left
+
+  let targetX = cameraX;
+  if (screenX < leftEdge) {
+    // Ship is past the left dead zone edge — push camera left
+    targetX = ship.x - leftEdge;
+  } else if (screenX > rightEdge) {
+    // Ship is past the right dead zone edge — push camera right
+    targetX = ship.x - rightEdge;
+  }
+
   // Clamp so camera doesn't show beyond world edges
-  cameraTargetX = clamp(cameraTargetX, 0, Math.max(0, worldWidth - W));
-  // Smooth follow (soft lag)
-  cameraX += (cameraTargetX - cameraX) * CAMERA_SMOOTH;
-  // Snap if very close (avoid sub-pixel jitter)
-  if (Math.abs(cameraX - cameraTargetX) < 0.5) cameraX = cameraTargetX;
+  targetX = clamp(targetX, 0, Math.max(0, worldWidth - W));
+
+  // Smooth transition (not instant, but responsive)
+  cameraX += (targetX - cameraX) * CAMERA_EDGE_SMOOTH;
+  if (Math.abs(cameraX - targetX) < 0.5) cameraX = targetX;
 }
 
 // ── Particles (simple pool) ──
@@ -671,6 +685,37 @@ function spawnPadAlien() {
       e.patrolRange = (padRight - padLeft) / 2;
       e.patrolDir = 1;
       return;
+    }
+  }
+}
+
+// Spawn turret guards near the landing pad for required-kill rounds.
+// Places them on the terrain flanking the pad so the player knows where to look.
+function spawnPadGuards(count) {
+  const padMid = (padLeft + padRight) / 2;
+  const padW = padRight - padLeft;
+  for (let g = 0; g < count; g++) {
+    for (let i = 0; i < MAX_ENEMIES; i++) {
+      if (!enemies[i].active) {
+        const e = enemies[i];
+        e.active = true;
+        e.type = 'turret';
+        e.state = 'telegraph';
+        e.stateTimer = 0;
+        // Place on alternating sides of the pad, close by
+        const side = (g % 2 === 0) ? -1 : 1;
+        const offset = padW * 0.8 + 30 + g * 25; // just outside the pad
+        e.x = clamp(padMid + side * offset, 30, worldWidth - 30);
+        e.y = getTerrainY(e.x);
+        e.vx = 0; e.vy = 0;
+        e.hp = 2;
+        e.maxHp = 2;
+        e.fireTimer = 2 + Math.random() * 1.5;
+        e.patrolDir = 1;
+        e.originX = e.x;
+        e.patrolRange = 0;
+        break;
+      }
     }
   }
 }
@@ -1005,13 +1050,16 @@ function startRound() {
   clearEnemies();
   roundKills = 0;
   // Snap camera to ship position (no smooth lag on round start)
-  cameraX = clamp(ship.x - W / 2, 0, worldWidth - W);
-  cameraTargetX = cameraX;
+  cameraX = clamp(ship.x - W / 2, 0, Math.max(0, worldWidth - W));
   // Regenerate stars for new world size
   generateStars();
   // Spawn pad alien if configured
   if (cfg.padAlien) {
     spawnPadAlien();
+  }
+  // Spawn required-kill guards near the pad so player doesn't have to hunt
+  if (cfg.requiredKills > 0) {
+    spawnPadGuards(cfg.requiredKills);
   }
   state = STATE.ROUND_INTRO;
   stateTimer = 0;
